@@ -1,0 +1,4 @@
+//エディターの認識用
+{
+    "extends": "./tsconfig.base.json"
+}
