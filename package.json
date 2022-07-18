@@ -4,7 +4,8 @@
   "description": "A \"mirabow\" is a parser generator for parsing token sequences with a declarative parser.",
   "keywords": [
     "parser",
-    "generator"
+    "generator",
+    "mirabow"
   ],
   "author": "tbsten",
   "license": "MIT",
