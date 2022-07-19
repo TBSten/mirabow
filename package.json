@@ -1,6 +1,6 @@
 {
   "name": "mirabow",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A \"mirabow\" is a parser generator for parsing token sequences with a declarative parser.",
   "keywords": [
     "parser",
@@ -39,7 +39,6 @@
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --p tsconfig.cjs.json",
     "build:esm": "tsc --p tsconfig.esm.json",
-    "prepack": "npm run build",
-    "publish": "npm publish --access public"
+    "prepack": "npm run build"
   }
 }
