@@ -1,3 +1,4 @@
+import { getConfig } from "config";
 import { esc } from "helper/escape";
 import { _getAllHooks } from "hook";
 import { _isKeywords } from "tokennize";
@@ -13,7 +14,11 @@ export const is = (arg: string | RegExp): Matcher => {
         exec: (input) => {
             let regex: RegExp;
             if (typeof arg === "string") {
-                regex = new RegExp(esc(arg), "i")
+                if (getConfig().ignoreCase) {
+                    regex = new RegExp(esc(arg), "i")
+                } else {
+                    regex = new RegExp(esc(arg))
+                }
             } else {
                 regex = arg
             }

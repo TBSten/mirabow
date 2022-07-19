@@ -19,3 +19,7 @@ export type Matcher = {
 export type Hook = (output: MatcherOutput | null) => unknown
 export type ToMatcherArgUnit = string | Matcher | ToMatcherArgUnit[]
 export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]
+
+export type Config = {
+    ignoreCase: boolean;
+}
