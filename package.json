@@ -1,6 +1,6 @@
 {
   "name": "mirabow",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "A \"mirabow\" is a parser generator for parsing token sequences with a declarative parser.",
   "keywords": [
     "parser",
@@ -14,17 +14,17 @@
     "url": "https://github.com/TBSten/mirabow.git"
   },
   "homepage": "https://github.com/TBSten/mirabow",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/esm/index.d.ts",
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/esm/src/index.d.ts",
   "files": [
     "dist/cjs/*",
     "dist/esm/*"
   ],
   "exports": {
     ".": {
-      "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/src/index.js",
+      "import": "./dist/esm/src/index.js",
       "types": "./index.d.ts"
     }
   },
