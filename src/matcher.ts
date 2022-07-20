@@ -2,7 +2,7 @@ import { getConfig } from "config";
 import { esc } from "helper/escape";
 import { _getAllHooks } from "hook";
 import { _isKeywords } from "tokennize";
-import { Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "types";
+import { Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
 

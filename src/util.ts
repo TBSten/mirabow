@@ -1,5 +1,5 @@
-import { Matcher, Tokens, ToMatcherArg } from "types"
 import { group, is } from "./matcher"
+import { Matcher, Tokens, ToMatcherArg } from "./types"
 
 export const toMatcher = (...args: ToMatcherArg[]): Matcher => {
     const first = args[0]
