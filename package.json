@@ -1,6 +1,6 @@
 {
   "name": "mirabow",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "A \"mirabow\" is a parser generator for parsing token sequences with a declarative parser.",
   "keywords": [
     "parser",
