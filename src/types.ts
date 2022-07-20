@@ -23,3 +23,5 @@ export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]
 export type Config = {
     ignoreCase: boolean;
 }
+
+export type MatcherFactory<Args extends Array<any>> = (...args: Args) => Matcher

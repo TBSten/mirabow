@@ -1,12 +1,12 @@
 import { getConfig } from "./config";
 import { esc } from "./helper/escape";
 import { _getAllHooks } from "./hook";
-import { _isKeywords } from "./tokennize";
+import { addIsKeywords } from "./tokennize";
 import { Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
 export const is = (arg: string | RegExp): Matcher => {
-    if (typeof arg === "string") _isKeywords.add(arg)
+    if (typeof arg === "string") addIsKeywords(arg)
     return {
         type: "is",
         debug: `"${arg}"`,
