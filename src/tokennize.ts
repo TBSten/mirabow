@@ -1,4 +1,4 @@
-import { esc } from "helper/escape"
+import { esc } from "./helper/escape"
 import { Tokens } from "./types"
 
 export const _isKeywords = new Set<string>()
