@@ -8,5 +8,6 @@
     "baseUrl": "./src",
     "declaration": true,
     "sourceMap": true,
+    "moduleResolution": "node"
   }
 }
