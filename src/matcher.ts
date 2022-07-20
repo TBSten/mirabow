@@ -75,14 +75,8 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
                 match: [],
                 result: undefined,
             }
-            console.log("group", `${matchers.map(m => m.debug).join(" ")}`,);
             for (const m of matchers) {
                 const out = m.exec(input)
-                console.log("group-loop", m.debug, out);
-                // if (!out) {
-                //     ans = emptyMatcherOutput()
-                //     break;
-                // }
                 if (!out.isOk) {
                     ans.isOk = false
                     break
@@ -198,7 +192,6 @@ export const optional = (...args: ToMatcherArg[]): Matcher => {
         exec(input) {
             const optStartCur = input.getCursor()
             const matcherOut = matcher.exec(input)
-            console.log("optional", `(${matcher.debug})?`, "out", matcherOut);
             if (!matcherOut.isOk) {
                 input.setCursor(optStartCur)
                 return {
