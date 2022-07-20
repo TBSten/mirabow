@@ -5,6 +5,13 @@ import { addIsKeywords } from "./tokennize";
 import { Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
+export const emptyMatcherOutput = (): MatcherOutput => ({
+    isOk: false,
+    result: undefined,
+    capture: {},
+    match: [],
+})
+
 export const is = (arg: string | RegExp): Matcher => {
     if (typeof arg === "string") addIsKeywords(arg)
     return {
@@ -24,12 +31,13 @@ export const is = (arg: string | RegExp): Matcher => {
             const inputStr = input.getNext()
             if (inputStr && regex.exec(inputStr)) {
                 return {
+                    isOk: true,
                     capture: {},
                     match: [inputStr],
                     result: undefined,
                 }
             } else {
-                return null
+                return emptyMatcherOutput()
             }
         }
     }
@@ -42,12 +50,13 @@ export const any = (): Matcher => {
             const inputStr = input.getNext()
             if (inputStr) {
                 return {
+                    isOk: true,
                     capture: {},
                     match: [inputStr],
                     result: undefined,
                 }
             } else {
-                return null
+                return emptyMatcherOutput()
             }
         }
     }
@@ -60,16 +69,23 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
         type: "group",
         debug: `${matchers.map(m => m.debug).join(" ")}`,
         exec: (input) => {
-            let ans: MatcherOutput | null = {
+            let ans: MatcherOutput = {
+                isOk: true,
                 capture: {},
                 match: [],
                 result: undefined,
             }
+            console.log("group", `${matchers.map(m => m.debug).join(" ")}`,);
             for (const m of matchers) {
                 const out = m.exec(input)
-                if (!out) {
-                    ans = null
-                    break;
+                console.log("group-loop", m.debug, out);
+                // if (!out) {
+                //     ans = emptyMatcherOutput()
+                //     break;
+                // }
+                if (!out.isOk) {
+                    ans.isOk = false
+                    break
                 }
                 ans = _updateGroupAns(ans, out)
             }
@@ -77,8 +93,8 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
         }
     }
 }
-function _updateGroupAns(prev: MatcherOutput | null, out: MatcherOutput) {
-    if (!prev) {
+function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
+    if (!prev.isOk) {
         return out
     }
     //prevをoutで更新
@@ -107,22 +123,23 @@ export const or = (..._matchers: ToMatcherArg[]): Matcher => {
         type: "or",
         debug: `${matchers.map(m => m.debug).join("|")}`,
         exec: (input) => {
-            let ans: MatcherOutput | null = null
             const orStartCursor = input.getCursor()
             for (const m of matchers) {
                 const out = m.exec(input)
-                if (!out) {
+                if (!out.isOk) {
                     //inputを元に戻す
                     input.setCursor(orStartCursor)
                     continue
                 }
+                //mにマッチしたのでoutを返す
                 return {
                     ...out,
+                    isOk: true,
                     capture: { ...out.capture },
                     match: [...out.match]
                 }
             }
-            return ans
+            return emptyMatcherOutput()
         }
     }
 }
@@ -133,8 +150,8 @@ export const capture = (name: string, _matcher: ToMatcherArg = any()): Matcher =
         debug: `<${matcher.debug}>`,
         exec(input) {
             const ans = matcher.exec(input)
-            if (!ans) {
-                return null
+            if (!ans.isOk) {
+                return emptyMatcherOutput()
             }
             return {
                 ...ans,
@@ -155,13 +172,14 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
         exec(input) {
             let cur = input.getCursor()
             let ans: MatcherOutput = {
+                isOk: true,
                 capture: {},
                 match: [],
                 result: undefined,
             }
             while (input.hasNext()) {
                 const out = matcher.exec(input)
-                if (!out) {
+                if (!out.isOk) {
                     input.setCursor(cur)
                     break
                 }
@@ -180,9 +198,11 @@ export const optional = (...args: ToMatcherArg[]): Matcher => {
         exec(input) {
             const optStartCur = input.getCursor()
             const matcherOut = matcher.exec(input)
-            if (!matcherOut) {
+            console.log("optional", `(${matcher.debug})?`, "out", matcherOut);
+            if (!matcherOut.isOk) {
                 input.setCursor(optStartCur)
                 return {
+                    isOk: true,
                     capture: {},
                     match: [],
                     result: undefined,

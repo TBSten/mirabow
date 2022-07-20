@@ -10,11 +10,12 @@ export type MatcherOutput<R = undefined> = {
     capture: Record<string, Tokens[]>
     match: Tokens
     result: R | undefined
+    isOk: boolean
 }
 export type Matcher = {
     type: string,
     debug: string,
-    exec: (input: MatcherInput) => MatcherOutput | null
+    exec: (input: MatcherInput) => MatcherOutput
 }
 export type Hook = (output: MatcherOutput | null) => unknown
 export type ToMatcherArgUnit = string | Matcher | ToMatcherArgUnit[]

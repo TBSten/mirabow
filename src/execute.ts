@@ -4,6 +4,9 @@ import { execMatcher } from "./util";
 
 export const execute = (matcher: Matcher, src: string) => {
     const tokens = tokennize(src)
-    return execMatcher(matcher, tokens)
+    return {
+        ...execMatcher(matcher, tokens),
+        tokens,
+    }
 }
 
