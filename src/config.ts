@@ -1,4 +1,4 @@
-import { Config } from "types";
+import { Config } from "./types";
 
 let _currentConfig: Config = {
     ignoreCase: false,
