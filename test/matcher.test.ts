@@ -1,4 +1,4 @@
-import { any, capture, define, list, MatcherExecutor, optional, or, ref, repeat, toMatcher } from "../src"
+import { any, capture, def, define, list, MatcherExecutor, opt, optional, or, ref, repeat, setConfig, toMatcher } from "../src"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -79,3 +79,19 @@ test("define-reference", () => {
     expect(executor.execute("011+010").isOk)
         .toBe(true)
 })
+
+test("tree", () => {
+    setConfig({ tree: true })
+    const executor = new MatcherExecutor(opt(def("id-a")("a")), def("id-rep")(repeat(def("id-grp")(["b", "c"]), "d")), "e")
+    executor.addHook("id-a", (out) => {
+        console.log("id-a hook", out);
+    })
+    const out = executor.execute("bcdbcde")
+    expect(out.isOk)
+        .toBe(true)
+    expect(out.tree)
+        .toEqual(
+            [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
+        )
+})
+

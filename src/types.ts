@@ -6,12 +6,14 @@ export type MatcherInput = {
     getCursor(): number
     hasNext(): boolean
 }
-// export type MatcherOutput<R = undefined> = {
+
+export type TreeNode = Token | null | TreeNode[]
 export type MatcherOutput<R> = {
     capture: Record<string, Tokens[]>
     match: Tokens
     result: R | undefined
     isOk: boolean
+    tree: TreeNode
 }
 export type Matcher<R> = {
     type: string,
@@ -24,6 +26,7 @@ export type ToMatcherArg<R> = ToMatcherArgUnit<R> | ToMatcherArgUnit<R>[]
 
 export type Config = {
     ignoreCase: boolean;
+    tree: boolean;
 }
 
 export type MatcherFactory<Args extends Array<any>, R> = (...args: Args) => Matcher<R>

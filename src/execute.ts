@@ -9,6 +9,14 @@ import { execMatcher, toMatcher } from "./util";
 //         tokens,
 //     }
 // }
+let _currentExecutor: MatcherExecutor<unknown> | null = null
+export const _setCurrentExecutor = <R>(executor: MatcherExecutor<R>) => _currentExecutor = executor
+export const _resetCurrentExecutor = () => _currentExecutor = null
+export const _getCurrentExecutor = () => {
+    if (_currentExecutor == null) throw new Error("can not find MatcherExecutor")
+    return _currentExecutor
+}
+
 
 export class MatcherExecutor<R = undefined>{
     matcher: Matcher<R>
@@ -25,10 +33,13 @@ export class MatcherExecutor<R = undefined>{
         })
     }
     execute(src: string) {
+        _setCurrentExecutor(this)
         const tokens = tokennize(src)
-        return {
-            ...execMatcher(this.matcher, tokens),
+        const ans = {
+            ...execMatcher<R>(this.matcher, tokens),
             tokens,
         }
+        _resetCurrentExecutor()
+        return ans
     }
 }

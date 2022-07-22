@@ -1,4 +1,4 @@
-import { getConfig } from "./config";
+import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { _getAllHooks } from "./hook";
 import { addIsKeywords } from "./tokennize";
@@ -10,6 +10,7 @@ export const emptyMatcherOutput = <R>(): MatcherOutput<R> => ({
     result: undefined,
     capture: {},
     match: [],
+    tree: null,
 })
 
 export const is = <R>(arg: string | RegExp): Matcher<R> => {
@@ -35,6 +36,7 @@ export const is = <R>(arg: string | RegExp): Matcher<R> => {
                     capture: {},
                     match: [inputStr],
                     result: undefined,
+                    tree: treeNode(inputStr),
                 }
             } else {
                 return emptyMatcherOutput()
@@ -54,6 +56,7 @@ export const any = <R>(): Matcher<R> => {
                     capture: {},
                     match: [inputStr],
                     result: undefined,
+                    tree: inputStr,
                 }
             } else {
                 return emptyMatcherOutput()
@@ -74,6 +77,7 @@ export const group = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
                 capture: {},
                 match: [],
                 result: undefined,
+                tree: [],
             }
             for (const m of matchers) {
                 const out = m.exec(input)
@@ -107,6 +111,13 @@ function _updateGroupAns<R>(prev: MatcherOutput<R>, out: MatcherOutput<R>) {
     })
     //match
     ans.match = [...ans.match, ...out.match]
+    //tree
+    if (getConfig().tree) {
+        if (!(ans.tree instanceof Array)) {
+            throw new Error("MatcherOutput.tree must be Array")
+        }
+        ans.tree = [...ans.tree, out.tree]
+    }
     return ans
 }
 export const or = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
@@ -130,7 +141,7 @@ export const or = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
                     ...out,
                     isOk: true,
                     capture: { ...out.capture },
-                    match: [...out.match]
+                    match: [...out.match],
                 }
             }
             return emptyMatcherOutput()
@@ -170,6 +181,7 @@ export const repeat = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
                 capture: {},
                 match: [],
                 result: undefined,
+                tree: treeNode([]),
             }
             while (input.hasNext()) {
                 const out = matcher.exec(input)
@@ -199,6 +211,7 @@ export const optional = <R>(...args: ToMatcherArg<R>[]): Matcher<R> => {
                     capture: {},
                     match: [],
                     result: undefined,
+                    tree: null,
                 }
             }
             return matcherOut
@@ -259,7 +272,7 @@ export const reference = <R>(name: string): Matcher<R> => {
 }
 const emitMatcherHook = <R>(name: string, out: MatcherOutput<R>) => {
     const hook = _getAllHooks()[name] as Hook<R> | undefined
-    if (hook) {
+    if (out.isOk && hook) {
         hook(out)
     }
 }
