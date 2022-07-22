@@ -5,19 +5,19 @@ import { addIsKeywords } from "./tokennize";
 import { Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
-export const emptyMatcherOutput = (): MatcherOutput => ({
+export const emptyMatcherOutput = <R>(): MatcherOutput<R> => ({
     isOk: false,
     result: undefined,
     capture: {},
     match: [],
 })
 
-export const is = (arg: string | RegExp): Matcher => {
+export const is = <R>(arg: string | RegExp): Matcher<R> => {
     if (typeof arg === "string") addIsKeywords(arg)
     return {
         type: "is",
         debug: `"${arg}"`,
-        exec: (input) => {
+        exec: (input: MatcherInput) => {
             let regex: RegExp;
             if (typeof arg === "string") {
                 if (getConfig().ignoreCase) {
@@ -42,7 +42,7 @@ export const is = (arg: string | RegExp): Matcher => {
         }
     }
 }
-export const any = (): Matcher => {
+export const any = <R>(): Matcher<R> => {
     return {
         type: "any",
         debug: `(any)`,
@@ -61,7 +61,7 @@ export const any = (): Matcher => {
         }
     }
 }
-export const group = (..._matchers: ToMatcherArg[]): Matcher => {
+export const group = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
@@ -69,7 +69,7 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
         type: "group",
         debug: `${matchers.map(m => m.debug).join(" ")}`,
         exec: (input) => {
-            let ans: MatcherOutput = {
+            let ans: MatcherOutput<R> = {
                 isOk: true,
                 capture: {},
                 match: [],
@@ -87,12 +87,12 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
         }
     }
 }
-function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
+function _updateGroupAns<R>(prev: MatcherOutput<R>, out: MatcherOutput<R>) {
     if (!prev.isOk) {
         return out
     }
     //prevをoutで更新
-    let ans: MatcherOutput = {
+    let ans: MatcherOutput<R> = {
         ...prev,
     }
     //capture
@@ -109,7 +109,7 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
     ans.match = [...ans.match, ...out.match]
     return ans
 }
-export const or = (..._matchers: ToMatcherArg[]): Matcher => {
+export const or = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
@@ -137,7 +137,7 @@ export const or = (..._matchers: ToMatcherArg[]): Matcher => {
         }
     }
 }
-export const capture = (name: string, _matcher: ToMatcherArg = any()): Matcher => {
+export const capture = <R>(name: string, _matcher: ToMatcherArg<R> = any()): Matcher<R> => {
     const matcher = toMatcher(_matcher)
     return {
         type: "capture",
@@ -157,7 +157,7 @@ export const capture = (name: string, _matcher: ToMatcherArg = any()): Matcher =
         },
     }
 }
-export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
+export const repeat = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
     const matchers = _matchers.map(m => toMatcher(m))
     const matcher = group(...matchers)
     return {
@@ -165,7 +165,7 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
         debug: `(${matchers.map(m => m.debug).join(" ")})*`,
         exec(input) {
             let cur = input.getCursor()
-            let ans: MatcherOutput = {
+            let ans: MatcherOutput<R> = {
                 isOk: true,
                 capture: {},
                 match: [],
@@ -184,7 +184,7 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
         },
     }
 }
-export const optional = (...args: ToMatcherArg[]): Matcher => {
+export const optional = <R>(...args: ToMatcherArg<R>[]): Matcher<R> => {
     const matcher = toMatcher(...args)
     return {
         type: "optional",
@@ -205,18 +205,18 @@ export const optional = (...args: ToMatcherArg[]): Matcher => {
         },
     }
 }
-export const list = (args: ToMatcherArg[] | ToMatcherArg, joiner: ToMatcherArg = ","): Matcher => {
+export const list = <R>(args: ToMatcherArg<R>[] | ToMatcherArg<R>, joiner: ToMatcherArg<R> = ","): Matcher<R> => {
     if (!(args instanceof Array)) args = [args]
     const matchers = toMatcher(...args)
     const joinMatcher = toMatcher(joiner)
     const listMatcher = group(matchers, repeat(joinMatcher, matchers))
     return listMatcher
 }
-export const debug = (
+export const debug = <R>(
     debug: string,
-    _matcher: ToMatcherArg,
-    hook?: (input: MatcherInput, output: MatcherOutput | null) => unknown,
-): Matcher => {
+    _matcher: ToMatcherArg<R>,
+    hook?: (input: MatcherInput, output: MatcherOutput<R> | null) => unknown,
+): Matcher<R> => {
     const matcher = toMatcher(_matcher)
     return {
         ...matcher,
@@ -228,8 +228,8 @@ export const debug = (
         },
     }
 }
-const _definedMatchers: Record<string, Matcher> = {}
-export const define = (name: string) => (..._matchers: ToMatcherArg[]): Matcher => {
+const _definedMatchers: Record<string, Matcher<any>> = {}
+export const define = (name: string) => <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
     const matcher = toMatcher(..._matchers)
     _definedMatchers[name] = matcher
     return {
@@ -241,7 +241,7 @@ export const define = (name: string) => (..._matchers: ToMatcherArg[]): Matcher 
         }
     }
 }
-export const reference = (name: string): Matcher => {
+export const reference = <R>(name: string): Matcher<R> => {
     return {
         type: "lazy",
         debug: `$${name}`,
@@ -257,8 +257,8 @@ export const reference = (name: string): Matcher => {
         }
     }
 }
-const emitMatcherHook = (name: string, out: MatcherOutput) => {
-    const hook = _getAllHooks()[name] as Hook | undefined
+const emitMatcherHook = <R>(name: string, out: MatcherOutput<R>) => {
+    const hook = _getAllHooks()[name] as Hook<R> | undefined
     if (hook) {
         hook(out)
     }

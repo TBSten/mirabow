@@ -6,23 +6,24 @@ export type MatcherInput = {
     getCursor(): number
     hasNext(): boolean
 }
-export type MatcherOutput<R = undefined> = {
+// export type MatcherOutput<R = undefined> = {
+export type MatcherOutput<R> = {
     capture: Record<string, Tokens[]>
     match: Tokens
     result: R | undefined
     isOk: boolean
 }
-export type Matcher = {
+export type Matcher<R> = {
     type: string,
     debug: string,
-    exec: (input: MatcherInput) => MatcherOutput
+    exec: (input: MatcherInput) => MatcherOutput<R>
 }
-export type Hook = (output: MatcherOutput | null) => unknown
-export type ToMatcherArgUnit = string | Matcher | ToMatcherArgUnit[]
-export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]
+export type Hook<R> = (output: MatcherOutput<R> | null) => unknown
+export type ToMatcherArgUnit<R> = string | Matcher<R> | ToMatcherArgUnit<R>[]
+export type ToMatcherArg<R> = ToMatcherArgUnit<R> | ToMatcherArgUnit<R>[]
 
 export type Config = {
     ignoreCase: boolean;
 }
 
-export type MatcherFactory<Args extends Array<any>> = (...args: Args) => Matcher
+export type MatcherFactory<Args extends Array<any>, R> = (...args: Args) => Matcher<R>

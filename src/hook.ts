@@ -1,10 +1,10 @@
 import { Hook } from "./types"
 
-const _hooks: Record<string, Hook> = {}
-export const addHook = (name: string, hook: Hook) => {
+const _hooks: Record<string, Hook<any>> = {}
+export const addHook = <R>(name: string, hook: Hook<R>) => {
     _hooks[name] = hook
 }
-export const addHooks = (hooks: Record<string, Hook>) => {
+export const addHooks = <R>(hooks: Record<string, Hook<R>>) => {
     Object.entries(hooks).forEach(([name, hook]) => {
         addHook(name, hook)
     })
