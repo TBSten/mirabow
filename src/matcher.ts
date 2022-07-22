@@ -234,6 +234,11 @@ export const define = (name: string) => (..._matchers: ToMatcherArg[]): Matcher 
     _definedMatchers[name] = matcher
     return {
         ...matcher,
+        exec(input) {
+            const out = matcher.exec(input)
+            emitMatcherHook(name, out)
+            return out
+        }
     }
 }
 export const reference = (name: string): Matcher => {
@@ -243,11 +248,19 @@ export const reference = (name: string): Matcher => {
         exec(input) {
             const matcher = _definedMatchers[name]
             const ans = matcher.exec(input)
-            const hook = _getAllHooks()[name] as Hook | undefined
-            if (hook) {
-                hook(ans)
-            }
+            // const hook = _getAllHooks()[name] as Hook | undefined
+            // if (hook) {
+            //     hook(ans)
+            // }
+            emitMatcherHook(name, ans)
             return ans
         }
     }
 }
+const emitMatcherHook = (name: string, out: MatcherOutput) => {
+    const hook = _getAllHooks()[name] as Hook | undefined
+    if (hook) {
+        hook(out)
+    }
+}
+
