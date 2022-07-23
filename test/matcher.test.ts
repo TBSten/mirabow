@@ -1,4 +1,4 @@
-import { any, capture, def, define, list, MatcherExecutor, opt, optional, or, ref, repeat, setConfig, toMatcher } from "../src"
+import { any, capture, def, define, list, MatcherExecutor, opt, optional, or, ref, repeat, scope, setConfig, toMatcher } from "../src"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -35,9 +35,10 @@ test("or", () => {
 test("capture", () => {
     const matcher = toMatcher("a", capture("test", any()), "c")
     const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("abc").isOk)
+    const out = executor.execute("abc")
+    expect(out.isOk)
         .toBe(true)
-    expect(executor.execute("abc").capture.test)
+    expect(out.capture.test)
         .toEqual([["b"]])
 })
 test("repeat", () => {
@@ -93,5 +94,33 @@ test("tree", () => {
         .toEqual(
             [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
         )
+})
+test("capture-scope", () => {
+    const matcher = toMatcher(
+        capture("cap-1", "a"),
+        scope("scope-1")(
+            capture("cap-2", "b"),
+            scope("scope-2")(
+                capture("cap-3", "c"),
+                capture("cap-4", "d"),
+            ),
+            capture("cap-5", "e"),
+        ),
+        capture("cap-6", "f"),
+    )
+    const out = new MatcherExecutor(matcher).execute("abcdef")
+    expect(out.capture)
+        .toEqual({
+            "cap-1": [["a"]],
+            "scope-1": {
+                "cap-2": [["b"]],
+                "scope-2": {
+                    "cap-3": [["c"]],
+                    "cap-4": [["d"]]
+                },
+                "cap-5": [["e"]],
+            },
+            "cap-6": [["f"]],
+        })
 })
 

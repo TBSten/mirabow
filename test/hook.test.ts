@@ -1,4 +1,5 @@
 import { cap, def, MatcherExecutor } from "../src"
+import { getCaptureTokens } from "../src/capture"
 
 test("hook", () => {
     const id = "test"
@@ -6,7 +7,8 @@ test("hook", () => {
     const executor = new MatcherExecutor(matcher)
     let tmp = ""    //tmpが更新されたらhookが呼ばれたことになる
     executor.addHook(id, (out) => {
-        tmp = out?.capture["t"].join("") ?? ""
+        // tmp = out?.capture["t"].join("") ?? ""
+        tmp = getCaptureTokens(out?.capture ?? {}, "t").join("") ?? ""
     })
     const out = executor.execute(`abc`)
     expect(out.isOk)

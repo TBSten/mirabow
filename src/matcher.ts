@@ -1,8 +1,9 @@
+import { getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { _getAllHooks } from "./hook";
 import { addIsKeywords } from "./tokennize";
-import { Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
+import { Capture, Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
 export const emptyMatcherOutput = <R>(): MatcherOutput<R> => ({
@@ -103,7 +104,14 @@ function _updateGroupAns<R>(prev: MatcherOutput<R>, out: MatcherOutput<R>) {
     Object.entries(out.capture).forEach(([key, value]) => {
         if (ans.capture[key]) {
             //keyは既にキャプチャされたことがある
-            ans.capture[key] = [...ans.capture[key], ...value]
+            // ans.capture[key] = [...ans.capture[key], ...value]
+            if (value instanceof Array) {
+                //value は Tokens
+                ans.capture[key] = [...getCaptureTokens(ans.capture, key), ...value]
+            } else {
+                //valueがTokens以外
+                throw new Error("not implement")
+            }
         } else {
             //keyはまだキャプチャされたことがない
             ans.capture[key] = value
@@ -162,8 +170,9 @@ export const capture = <R>(name: string, _matcher: ToMatcherArg<R> = any()): Mat
                 ...ans,
                 capture: {
                     ...ans.capture,
-                    [name]: [...(ans.capture[name] ?? []), ans.match],
-                },
+                    // [name]: [...(ans.capture[name] ?? []), ans.match],
+                    [name]: [...(getCaptureTokens(ans.capture, name, [])), ans.match],
+                } as Capture,
             }
         },
     }
@@ -274,6 +283,22 @@ const emitMatcherHook = <R>(name: string, out: MatcherOutput<R>) => {
     const hook = _getAllHooks()[name] as Hook<R> | undefined
     if (out.isOk && hook) {
         hook(out)
+    }
+}
+export const scope = <R>(name: string,) => (...args: ToMatcherArg<R>[]): Matcher<R> => {
+    const matcher = toMatcher(...args)
+    return {
+        type: "scope",
+        debug: `scope(${name}){ ${matcher.debug} }`,
+        exec(input) {
+            const ans = matcher.exec(input)
+            ans.capture = {
+                [name]: {
+                    ...ans.capture
+                }
+            }
+            return ans
+        }
     }
 }
 

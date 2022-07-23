@@ -7,9 +7,11 @@ export type MatcherInput = {
     hasNext(): boolean
 }
 
+export type CaptureNode = Tokens | { [name: string]: CaptureNode }
+export type Capture = { [name: string]: CaptureNode }
 export type TreeNode = Token | null | TreeNode[]
 export type MatcherOutput<R> = {
-    capture: Record<string, Tokens[]>
+    capture: Capture
     match: Tokens
     result: R | undefined
     isOk: boolean
