@@ -5,7 +5,7 @@ export const getCapture = (capture: Capture, name: string) => {
     const ans = capture[name]
     return ans
 }
-export const getCaptureTokens = (capture: Capture, name: string, defaultTokens?: Tokens) => {
+export const getCaptureTokens = (capture: Capture, name: string, defaultTokens?: Tokens[]): Tokens[] => {
     const ans = getCapture(capture, name)
     if (!(ans instanceof Array)) {
         if (defaultTokens) {

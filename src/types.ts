@@ -7,7 +7,7 @@ export type MatcherInput = {
     hasNext(): boolean
 }
 
-export type CaptureNode = Tokens | { [name: string]: CaptureNode }
+export type CaptureNode = Tokens[] | { [name: string]: CaptureNode }
 export type Capture = { [name: string]: CaptureNode }
 export type TreeNode = Token | null | TreeNode[]
 export type MatcherOutput<R> = {
