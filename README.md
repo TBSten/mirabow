@@ -1,5 +1,5 @@
 
-![icon](doc/images/icon.png)
+![icon](doc/images/wide-icon.png)
 
 # MIRABOW
 
