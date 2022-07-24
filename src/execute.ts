@@ -45,12 +45,12 @@ export class MatcherExecutor<R = undefined>{
 }
 
 export const execute = <R>(
-    matcher: ToMatcherArg<R>[],
+    matcher: ToMatcherArg<R>,
     src: string,
     option?: Partial<{ hooks: Record<string, Hook<R>> }>,
 ) => {
     const hooks = option?.hooks ?? {}
-    const executor = new MatcherExecutor(...matcher)
+    const executor = new MatcherExecutor(matcher)
     executor.addHooks(hooks)
     const result = executor.execute(src)
     return result
