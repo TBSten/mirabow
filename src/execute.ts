@@ -43,3 +43,10 @@ export class MatcherExecutor<R = undefined>{
         return ans
     }
 }
+
+export const execute = <R>(matcher: ToMatcherArg<R>[], src: string, { hooks }: { hooks: Record<string, Hook<R>> }) => {
+    const executor = new MatcherExecutor(...matcher)
+    executor.addHooks(hooks)
+    const result = executor.execute(src)
+    return result
+}
