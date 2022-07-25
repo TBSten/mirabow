@@ -1,9 +1,10 @@
-import { getCaptureTokens } from "./capture";
+import { inspect } from "util";
+import { getCaptureArrayScope, getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { _getAllHooks } from "./hook";
 import { addIsKeywords } from "./tokennize";
-import { Capture, Hook, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
+import { Capture, Hook, isScope, isTokens, Matcher, MatcherInput, MatcherOutput, Scope, Tokens, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
 export const emptyMatcherOutput = <R>(): MatcherOutput<R> => ({
@@ -104,13 +105,19 @@ function _updateGroupAns<R>(prev: MatcherOutput<R>, out: MatcherOutput<R>) {
     Object.entries(out.capture).forEach(([key, value]) => {
         if (ans.capture[key]) {
             //keyは既にキャプチャされたことがある
-            // ans.capture[key] = [...ans.capture[key], ...value]
-            if (value instanceof Array) {
+            const isArray = value instanceof Array
+            // console.log(value, isArray && isScope(value[0]));
+            if (isArray && isTokens(value[0])) {
                 //value は Tokens
-                ans.capture[key] = [...getCaptureTokens(ans.capture, key), ...value]
+                const tokens = value as Tokens[]
+                ans.capture[key] = [...getCaptureTokens(ans.capture, key), ...tokens]
+            } else if (isArray && isScope(value[0])) {
+                //value は Scope[]
+                const scopes = value as Scope[]
+                ans.capture[key] = [...getCaptureArrayScope(ans.capture, key), ...scopes]
             } else {
-                //valueがTokens以外
-                throw new Error("not implement")
+                //valueが不正
+                throw new Error(`invalid value as CaptureNode key:${key} value:${inspect(value, { colors: false, depth: 10 })}`)
             }
         } else {
             //keyはまだキャプチャされたことがない
@@ -295,10 +302,24 @@ export const scope = <R>(name: string,) => (...args: ToMatcherArg<R>[]): Matcher
             ans.capture = {
                 [name]: {
                     ...ans.capture
-                }
+                } as Scope
             }
             return ans
         }
+    }
+}
+export const arrayScope = <R>(name: string) => (...args: ToMatcherArg<R>[]): Matcher<R> => {
+    const matcher = toMatcher(...args)
+    return {
+        type: "scope",
+        debug: `arrayScope(${name}){ ${matcher.debug} }`,
+        exec(input) {
+            const ans = matcher.exec(input)
+            ans.capture = {
+                [name]: [ans.capture]
+            } as Scope
+            return ans
+        },
     }
 }
 

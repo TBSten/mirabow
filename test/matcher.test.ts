@@ -1,4 +1,4 @@
-import { any, capture, def, define, list, MatcherExecutor, opt, optional, or, ref, repeat, scope, setConfig, toMatcher } from "../src"
+import { any, arrayScope, capture, def, define, execute, list, MatcherExecutor, opt, optional, or, ref, repeat, scope, setConfig, toMatcher } from "../src"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -122,5 +122,28 @@ test("capture-scope", () => {
             },
             "cap-6": [["f"]],
         })
+})
+test("capture-scope-in-group", () => {
+    const matcher = repeat(
+        "(",
+        arrayScope("ab-list")(repeat([
+            capture("cap-ab", or("a", "b")),
+            capture("cap-ab", or("a", "b")),
+        ])
+        ),
+        ")",
+    )
+    const out = execute(matcher, "(ba)(aa)")
+    expect(out.capture)
+        .toEqual(expect.objectContaining({
+            "scope-out": [
+                {
+                    "cap-ab": [["b"], ["a"]],
+                },
+                {
+                    "cap-ab": [["a"], ["a"]],
+                },
+            ],
+        }))
 })
 
