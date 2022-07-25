@@ -136,7 +136,7 @@ test("capture-scope-in-group", () => {
     const out = execute(matcher, "(ba)(aa)")
     expect(out.capture)
         .toEqual(expect.objectContaining({
-            "scope-out": [
+            "ab-list": [
                 {
                     "cap-ab": [["b"], ["a"]],
                 },

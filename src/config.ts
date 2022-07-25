@@ -2,7 +2,8 @@ import { Config, TreeNode } from "./types";
 
 let _currentConfig: Config = {
     ignoreCase: false,
-    tree: true,
+    tree: false,
+    ignoreString: "\\s"
 }
 
 export const setConfig = (config: Partial<Config>) => {

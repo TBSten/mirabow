@@ -64,6 +64,7 @@ export type ToMatcherArg<R> = ToMatcherArgUnit<R> | ToMatcherArgUnit<R>[]
 export type Config = {
     ignoreCase: boolean;
     tree: boolean;
+    ignoreString: string;
 }
 
 export type MatcherFactory<Args extends Array<any>, R> = (...args: Args) => Matcher<R>
