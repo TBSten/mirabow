@@ -43,7 +43,7 @@ export function isCaptureNode(arg: any): arg is CaptureNode {
         isScope(arg)                // arg is Scope
     )
 }
-export type Capture = { [name: string]: CaptureNode }
+export type Capture = Scope
 export type TreeNode = Token | null | TreeNode[]
 export type MatcherOutput<R> = {
     capture: Capture
