@@ -3,7 +3,7 @@ import { getCaptureArrayScope, getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { _getAllHooks } from "./hook";
-import { addIsKeywords } from "./tokennize";
+import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
 import { Capture, Hook, isScope, isTokens, Matcher, MatcherInput, MatcherOutput, Scope, Tokens, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
@@ -32,14 +32,14 @@ export const is = <R>(arg: string | RegExp): Matcher<R> => {
             } else {
                 regex = arg
             }
-            const inputStr = input.getNext()
-            if (inputStr && regex.exec(inputStr)) {
+            const inputToken = input.getNext()
+            if (inputToken && regex.exec(inputToken)) {
                 return {
                     isOk: true,
                     capture: {},
-                    match: [inputStr],
+                    match: [inputToken],
                     result: undefined,
-                    tree: treeNode(inputStr),
+                    tree: treeNode(inputToken),
                 }
             } else {
                 return emptyMatcherOutput()
@@ -47,25 +47,31 @@ export const is = <R>(arg: string | RegExp): Matcher<R> => {
         }
     }
 }
-export const any = <R>(): Matcher<R> => {
+//キーワードを含めた任意の1トークン
+export const token = <R>(): Matcher<R> => {
     return {
         type: "any",
         debug: `(any)`,
         exec: (input) => {
-            const inputStr = input.getNext()
-            if (inputStr) {
+            const inputToken = input.getNext()
+            if (inputToken) {
                 return {
                     isOk: true,
                     capture: {},
-                    match: [inputStr],
+                    match: [inputToken],
                     result: undefined,
-                    tree: inputStr,
+                    tree: inputToken,
                 }
             } else {
                 return emptyMatcherOutput()
             }
         }
     }
+}
+//キーワード以外の任意の1トークン
+export const any = <R>(): Matcher<R> => {
+    const matcher = debug("<any>", not<R>(anyKeyword<R>()))
+    return matcher
 }
 export const group = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
     const matchers = _matchers.map(matcher => {
@@ -164,7 +170,7 @@ export const or = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
         }
     }
 }
-export const capture = <R>(name: string, _matcher: ToMatcherArg<R> = any()): Matcher<R> => {
+export const capture = <R>(name: string, _matcher: ToMatcherArg<R> = token()): Matcher<R> => {
     const matcher = toMatcher(_matcher)
     return {
         type: "capture",
@@ -323,4 +329,43 @@ export const arrayScope = <R>(name: string) => (...args: ToMatcherArg<R>[]): Mat
         },
     }
 }
-
+//引数で指定したMatcherがisOk:falseを返したらをそれをtrueにして返す
+export const not = <R>(matcher: Matcher<R>): Matcher<R> => {
+    return {
+        ...matcher,
+        type: "not",
+        debug: `!(${matcher.debug})`,
+        exec(input) {
+            const out = matcher.exec(input)
+            return {
+                ...out,
+                isOk: !out.isOk,
+            }
+        }
+    }
+}
+//何かしらのキーワード
+export const anyKeyword = <R>(): Matcher<R> => {
+    return {
+        type: "someKeyword",
+        debug: `someKeyword`,
+        exec(input) {
+            const inputToken = input.getNext()
+            if (!inputToken) return emptyMatcherOutput()
+            const keywords = getIsKeywords()
+            const isHit = keywords.reduce((ans, keyword) => {
+                if (ans || hitIsKeyword(keyword, inputToken)) {
+                    return true
+                }
+                return ans
+            }, false)
+            return {
+                isOk: isHit,
+                capture: {},
+                match: [inputToken],
+                result: undefined,
+                tree: inputToken,
+            }
+        },
+    }
+}

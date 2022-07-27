@@ -1,4 +1,4 @@
-import { any, arrayScope, cap, CQuery, execute, li, opt, or } from "../src";
+import { arrayScope, cap, CQuery, execute, li, opt, or, token } from "../src";
 
 test("Capture Query", () => {
     const out = execute([
@@ -9,7 +9,7 @@ test("Capture Query", () => {
                     "put",
                     ["yarn", "add"]
                 )),
-                opt(cap("arg", any())),
+                opt(cap("arg", token())),
             )
         ], ";"),
     ], "get -a; put -f; get -s; yarn add mirabow")

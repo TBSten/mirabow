@@ -1,4 +1,4 @@
-import { any, arrayScope, capture, def, define, execute, list, MatcherExecutor, opt, optional, or, ref, repeat, scope, setConfig, toMatcher } from "../src"
+import { any, arrayScope, capture, def, define, execute, list, MatcherExecutor, opt, optional, or, ref, repeat, scope, setConfig, token, toMatcher } from "../src"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -8,11 +8,19 @@ test("is", () => {
 })
 
 test("any", () => {
-    const matcher = toMatcher("a", any(), "c")
+    const matcher = toMatcher("x", any(), "z")
     const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("ac").isOk)
+    expect(executor.execute("xz").isOk)
         .toBe(false)
-    expect(executor.execute("abc").isOk)
+    expect(executor.execute("xxz").isOk)
+        .toBe(false)
+    expect(executor.execute("xyz").isOk)
+        .toBe(true)
+})
+
+test("token", () => {
+    const out = execute(["a", token(), "b"], `abb`)
+    expect(out.isOk)
         .toBe(true)
 })
 
@@ -33,7 +41,7 @@ test("or", () => {
 })
 
 test("capture", () => {
-    const matcher = toMatcher("a", capture("test", any()), "c")
+    const matcher = toMatcher("a", capture("test"), "c")
     const executor = new MatcherExecutor(matcher)
     const out = executor.execute("abc")
     expect(out.isOk)
@@ -42,7 +50,7 @@ test("capture", () => {
         .toEqual([["b"]])
 })
 test("repeat", () => {
-    const matcher = toMatcher("a", repeat("b", any(), "d"), "e")
+    const matcher = toMatcher("a", repeat("b", token(), "d"), "e")
     const executor = new MatcherExecutor(matcher)
     expect(executor.execute("abcdbdde").isOk)
         .toBe(true)
@@ -146,4 +154,8 @@ test("capture-scope-in-group", () => {
             ],
         }))
 })
+
+test("not", () => { })
+test("anyKeyword", () => { })
+
 
