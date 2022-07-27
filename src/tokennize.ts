@@ -1,16 +1,30 @@
-import { getConfig } from "./config"
-import { esc } from "./helper/escape"
-import { Tokens } from "./types"
+import { getConfig } from "./config";
+import { esc } from "./helper/escape";
+import { Tokens } from "./types";
 
-const _isKeywords = new Set<string>()
-export const getIsKeywords = () => Array.from(_isKeywords.values()).sort((a, b) => b.length - a.length)
-export const addIsKeywords = (isKeywords: string) => _isKeywords.add(isKeywords)
+export type Keyword = string | RegExp
+const _isKeywords = new Set<Keyword>()
+const sortKeywords = (keywords: Iterable<Keyword>) => Array.from(keywords).sort((a, b) => {
+    if (a instanceof RegExp) {
+        return -1
+    } else if (b instanceof RegExp) {
+        return 1
+    } else {
+        return b.length - a.length
+    }
+})
+export const getIsKeywords = () => sortKeywords(_isKeywords.values())
+export const addIsKeywords = (isKeywords: Keyword) => _isKeywords.add(isKeywords)
 
-export const tokennize = (source: string, keywords: string[] = Array.from(_isKeywords)): Tokens => {
-    const escKeywords = keywords.map(s => esc(s)).sort((a, b) => b.length - a.length)
+export const tokennize = (source: string, keywords: Keyword[] = getIsKeywords()): Tokens => {
+    const escKeywords = sortKeywords(
+        (keywords.map(s => typeof s === "string" ? esc(s) : s))
+    ).map(keyword => keyword instanceof RegExp ? keyword.source : keyword)
     const ignoreString = getConfig().ignoreString
+    const ignoreCase = getConfig().ignoreCase
+    const regex = `(${escKeywords.join("|")})|${ignoreString}+`
     const ans: string[] = source
-        .split(new RegExp(`(${escKeywords.join("|")})|${ignoreString}+`, "i"))
+        .split(new RegExp(regex, ignoreCase ? "i" : ""))
         .filter(s => s && !s.match(new RegExp(`^${ignoreString}*$`)))
     return ans
 }

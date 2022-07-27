@@ -16,7 +16,8 @@ export const emptyMatcherOutput = <R>(): MatcherOutput<R> => ({
 })
 
 export const is = <R>(arg: string | RegExp): Matcher<R> => {
-    if (typeof arg === "string") addIsKeywords(arg)
+    // if (typeof arg === "string") addIsKeywords(arg)
+    addIsKeywords(arg)
     return {
         type: "is",
         debug: `"${arg}"`,
