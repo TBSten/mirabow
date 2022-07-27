@@ -16,7 +16,7 @@ const sortKeywords = (keywords: Iterable<Keyword>) => Array.from(keywords).sort(
 export const getIsKeywords = () => sortKeywords(_isKeywords.values())
 export const addIsKeywords = (isKeywords: Keyword) => _isKeywords.add(isKeywords)
 export const hitIsKeyword = (keyword: Keyword, target: string) => {
-    const regex = typeof keyword === "string" ? keyword : keyword.source
+    const regex = typeof keyword === "string" ? esc(keyword) : keyword.source
     const ignoreCase = getConfig().ignoreCase
     return !!target.match(new RegExp(`^${regex}$`, ignoreCase ? "i" : ""))
 }
