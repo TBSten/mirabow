@@ -1,4 +1,5 @@
 import { any, arrayScope, capture, def, execute, list, MatcherExecutor, optional, or, repeat, scope, token, toMatcher } from "../src"
+import { i } from "./util"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -80,10 +81,20 @@ test("list", () => {
         .toBe(false)
 })
 test("define-reference", () => {
-    const m = def(() => or(a, b))
-    const a = def(repeat("a"))
+    const m = def(() => [or(a, b), "X"])
+    const a = def(repeat(any(), ","))
     const b = def(repeat("b"))
-    expect(execute(m, "a").isOk)
+    a.hook = (out) => {
+        i("a hook", out);
+        return out.result.map(res => parseInt(res as string))
+    }
+    m.hook = (out) => {
+        i("m hook", out);
+        return [out.result.reduce<number>((ans, value) => ans + (value as number), 0)]
+    }
+    const out = execute(m, "1,2,3,X")
+    i(out);
+    expect(out.isOk)
         .toBe(true)
 })
 

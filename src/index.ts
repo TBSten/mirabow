@@ -2,7 +2,6 @@
 export * from "./capture"
 export * from "./config"
 export * from "./execute"
-export * from "./hook"
 export * from "./matcher"
 export * from "./shortcut"
 export * from "./tokennize"

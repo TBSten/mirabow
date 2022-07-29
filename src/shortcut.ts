@@ -1,4 +1,4 @@
-import { capture, define, group, list, optional, reference, repeat } from "./matcher"
+import { capture, define, group, list, optional, repeat } from "./matcher"
 
 //shortcut
 export const g = group
@@ -10,4 +10,3 @@ export const re = repeat
 export const opt = optional
 export const li = list
 export const def = define
-export const ref = reference

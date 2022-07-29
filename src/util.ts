@@ -1,7 +1,7 @@
 import { group, is } from "./matcher"
 import { Matcher, Tokens, ToMatcherArg } from "./types"
 
-export const toMatcher = <R>(...args: ToMatcherArg<R>[]): Matcher<R> => {
+export const toMatcher = (...args: ToMatcherArg[]): Matcher => {
     const first = args[0]
     if (args.length === 1) {
         if (typeof first === "string") {
@@ -15,8 +15,8 @@ export const toMatcher = <R>(...args: ToMatcherArg<R>[]): Matcher<R> => {
         return group(...args.map(a => toMatcher(a)))
     }
 }
-export const execMatcher = <R>(
-    matcher: ToMatcherArg<R>,
+export const execMatcher = (
+    matcher: ToMatcherArg,
     data: Tokens,
 ) => {
     let cur = 0

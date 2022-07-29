@@ -45,21 +45,24 @@ export function isCaptureNode(arg: any): arg is CaptureNode {
 }
 export type Capture = Scope
 export type TreeNode = Token | null | TreeNode[]
-export type MatcherOutput<R> = {
+export type MatcherOutput = {
     capture: Capture
     match: Tokens
-    result: R | undefined
+    result: unknown[]
     isOk: boolean
     tree: TreeNode
 }
-export type Matcher<R> = {
+export type Matcher = {
     type: string,
     debug: string,
-    exec: (input: MatcherInput) => MatcherOutput<R>
+    exec: (input: MatcherInput) => MatcherOutput
 }
-export type Hook<R> = (output: MatcherOutput<R> | null) => unknown
-export type ToMatcherArgUnit<R> = string | Matcher<R> | ToMatcherArgUnit<R>[]
-export type ToMatcherArg<R> = ToMatcherArgUnit<R> | ToMatcherArgUnit<R>[]
+export type DefinedMatcher = Matcher & {
+    hook(out: MatcherOutput): unknown[] | void
+}
+export type Hook = (output: MatcherOutput | null) => unknown
+export type ToMatcherArgUnit = string | Matcher | ToMatcherArgUnit[]
+export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]
 
 export type Config = {
     ignoreCase: boolean;
@@ -67,4 +70,4 @@ export type Config = {
     ignoreString: string;
 }
 
-export type MatcherFactory<Args extends Array<any>, R> = (...args: Args) => Matcher<R>
+export type MatcherFactory<Args extends Array<any>, R> = (...args: Args) => Matcher

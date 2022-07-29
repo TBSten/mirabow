@@ -2,20 +2,19 @@ import { inspect } from "util";
 import { getCaptureArrayScope, getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
-import { _getAllHooks } from "./hook";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
-import { Capture, Hook, isScope, isTokens, Matcher, MatcherInput, MatcherOutput, Scope, Tokens, ToMatcherArg } from "./types";
+import { Capture, DefinedMatcher, isScope, isTokens, Matcher, MatcherInput, MatcherOutput, Scope, Tokens, ToMatcherArg } from "./types";
 import { toMatcher } from "./util";
 
-export const emptyMatcherOutput = <R>(): MatcherOutput<R> => ({
+export const emptyMatcherOutput = (): MatcherOutput => ({
     isOk: false,
-    result: undefined,
+    result: [],
     capture: {},
     match: [],
     tree: null,
 })
 
-export const is = <R>(arg: string | RegExp): Matcher<R> => {
+export const is = (arg: string | RegExp): Matcher => {
     // if (typeof arg === "string") addIsKeywords(arg)
     addIsKeywords(arg)
     return {
@@ -38,7 +37,7 @@ export const is = <R>(arg: string | RegExp): Matcher<R> => {
                     isOk: true,
                     capture: {},
                     match: [inputToken],
-                    result: undefined,
+                    result: [],
                     tree: treeNode(inputToken),
                 }
             } else {
@@ -48,7 +47,7 @@ export const is = <R>(arg: string | RegExp): Matcher<R> => {
     }
 }
 //キーワードを含めた任意の1トークン
-export const token = <R>(): Matcher<R> => {
+export const token = (): Matcher => {
     return {
         type: "any",
         debug: `(any)`,
@@ -59,7 +58,7 @@ export const token = <R>(): Matcher<R> => {
                     isOk: true,
                     capture: {},
                     match: [inputToken],
-                    result: undefined,
+                    result: [inputToken],
                     tree: inputToken,
                 }
             } else {
@@ -69,11 +68,11 @@ export const token = <R>(): Matcher<R> => {
     }
 }
 //キーワード以外の任意の1トークン
-export const any = <R>(): Matcher<R> => {
-    const matcher = debug("<any>", not<R>(anyKeyword<R>()))
+export const any = (): Matcher => {
+    const matcher = debug("<any>", not(anyKeyword()))
     return matcher
 }
-export const group = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
+export const group = (..._matchers: ToMatcherArg[]): Matcher => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
@@ -81,11 +80,11 @@ export const group = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
         type: "group",
         debug: `${matchers.map(m => m.debug).join(" ")}`,
         exec: (input) => {
-            let ans: MatcherOutput<R> = {
+            let ans: MatcherOutput = {
                 isOk: true,
                 capture: {},
                 match: [],
-                result: undefined,
+                result: [],
                 tree: [],
             }
             for (const m of matchers) {
@@ -100,12 +99,12 @@ export const group = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
         }
     }
 }
-function _updateGroupAns<R>(prev: MatcherOutput<R>, out: MatcherOutput<R>) {
+function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
     if (!prev.isOk) {
         return out
     }
     //prevをoutで更新
-    let ans: MatcherOutput<R> = {
+    let ans: MatcherOutput = {
         ...prev,
     }
     //capture
@@ -140,9 +139,11 @@ function _updateGroupAns<R>(prev: MatcherOutput<R>, out: MatcherOutput<R>) {
         }
         ans.tree = [...ans.tree, out.tree]
     }
+    //result
+    ans.result.push(...out.result)
     return ans
 }
-export const or = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
+export const or = (..._matchers: ToMatcherArg[]): Matcher => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
@@ -170,7 +171,7 @@ export const or = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
         }
     }
 }
-export const capture = <R>(name: string, _matcher: ToMatcherArg<R> = token()): Matcher<R> => {
+export const capture = (name: string, _matcher: ToMatcherArg = token()): Matcher => {
     const matcher = toMatcher(_matcher)
     return {
         type: "capture",
@@ -191,7 +192,7 @@ export const capture = <R>(name: string, _matcher: ToMatcherArg<R> = token()): M
         },
     }
 }
-export const repeat = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
+export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
     const matchers = _matchers.map(m => toMatcher(m))
     const matcher = group(...matchers)
     return {
@@ -199,11 +200,11 @@ export const repeat = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
         debug: `(${matchers.map(m => m.debug).join(" ")})*`,
         exec(input) {
             let cur = input.getCursor()
-            let ans: MatcherOutput<R> = {
+            let ans: MatcherOutput = {
                 isOk: true,
                 capture: {},
                 match: [],
-                result: undefined,
+                result: [],
                 tree: treeNode([]),
             }
             while (input.hasNext()) {
@@ -219,7 +220,7 @@ export const repeat = <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
         },
     }
 }
-export const optional = <R>(...args: ToMatcherArg<R>[]): Matcher<R> => {
+export const optional = (...args: ToMatcherArg[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
         type: "optional",
@@ -233,7 +234,7 @@ export const optional = <R>(...args: ToMatcherArg<R>[]): Matcher<R> => {
                     isOk: true,
                     capture: {},
                     match: [],
-                    result: undefined,
+                    result: [],
                     tree: null,
                 }
             }
@@ -241,18 +242,18 @@ export const optional = <R>(...args: ToMatcherArg<R>[]): Matcher<R> => {
         },
     }
 }
-export const list = <R>(args: ToMatcherArg<R>[] | ToMatcherArg<R>, joiner: ToMatcherArg<R> = ","): Matcher<R> => {
+export const list = (args: ToMatcherArg[] | ToMatcherArg, joiner: ToMatcherArg = ","): Matcher => {
     if (!(args instanceof Array)) args = [args]
     const matchers = toMatcher(...args)
     const joinMatcher = toMatcher(joiner)
     const listMatcher = group(matchers, repeat(joinMatcher, matchers))
     return listMatcher
 }
-export const debug = <R>(
+export const debug = (
     debug: string,
-    _matcher: ToMatcherArg<R>,
-    hook?: (input: MatcherInput, output: MatcherOutput<R> | null) => unknown,
-): Matcher<R> => {
+    _matcher: ToMatcherArg,
+    hook?: (input: MatcherInput, output: MatcherOutput | null) => unknown,
+): Matcher => {
     const matcher = toMatcher(_matcher)
     return {
         ...matcher,
@@ -264,57 +265,27 @@ export const debug = <R>(
         },
     }
 }
-const _definedMatchers: Record<string, Matcher<any>> = {}
-const _defId = () => Math.floor(Math.random() * 10 ^ 12) + ""
-// export const define = (name: string) => <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
-//     const matcher = toMatcher(..._matchers)
-//     _definedMatchers[name] = matcher
-//     return {
-//         ...matcher,
-//         exec(input) {
-//             const out = matcher.exec(input)
-//             emitMatcherHook(name, out)
-//             return out
-//         }
-//     }
-// }
-export const define = <R>(_matcher: (() => Matcher<R>) | Matcher<R>): Matcher<R> => {
-    return {
+export const define = (_matcher: (() => ToMatcherArg) | ToMatcherArg) => {
+    const definedMatcher: DefinedMatcher = {
         type: "define",
         debug: `define()`,
         exec(input) {
-            const id = _defId()
             const matcher = _matcher instanceof Function ? _matcher() : _matcher
-            _definedMatchers[id] = matcher
-            const out = matcher.exec(input)
-            emitMatcherHook(id, out)
+            let out = toMatcher(matcher).exec(input)
+            // emit matcher hook by out
+            const newResult = definedMatcher.hook(out)
+            if (newResult) {
+                out.result = newResult
+            }
             return out
-        }
+        },
+        hook(out) {
+            return out.result
+        },
     }
+    return definedMatcher
 }
-export const reference = <R>(name: string): Matcher<R> => {
-    return {
-        type: "lazy",
-        debug: `$${name}`,
-        exec(input) {
-            const matcher = _definedMatchers[name]
-            const ans = matcher.exec(input)
-            // const hook = _getAllHooks()[name] as Hook | undefined
-            // if (hook) {
-            //     hook(ans)
-            // }
-            emitMatcherHook(name, ans)
-            return ans
-        }
-    }
-}
-const emitMatcherHook = <R>(name: string, out: MatcherOutput<R>) => {
-    const hook = _getAllHooks()[name] as Hook<R> | undefined
-    if (out.isOk && hook) {
-        hook(out)
-    }
-}
-export const scope = <R>(name: string,) => (...args: ToMatcherArg<R>[]): Matcher<R> => {
+export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
         type: "scope",
@@ -330,7 +301,7 @@ export const scope = <R>(name: string,) => (...args: ToMatcherArg<R>[]): Matcher
         }
     }
 }
-export const arrayScope = <R>(name: string) => (...args: ToMatcherArg<R>[]): Matcher<R> => {
+export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
         type: "scope",
@@ -345,7 +316,7 @@ export const arrayScope = <R>(name: string) => (...args: ToMatcherArg<R>[]): Mat
     }
 }
 //引数で指定したMatcherがisOk:falseを返したらをそれをtrueにして返す
-export const not = <R>(matcher: Matcher<R>): Matcher<R> => {
+export const not = (matcher: Matcher): Matcher => {
     return {
         ...matcher,
         type: "not",
@@ -360,7 +331,7 @@ export const not = <R>(matcher: Matcher<R>): Matcher<R> => {
     }
 }
 //何かしらのキーワード
-export const anyKeyword = <R>(): Matcher<R> => {
+export const anyKeyword = (): Matcher => {
     return {
         type: "someKeyword",
         debug: `someKeyword`,
@@ -378,7 +349,7 @@ export const anyKeyword = <R>(): Matcher<R> => {
                 isOk: isHit,
                 capture: {},
                 match: [inputToken],
-                result: undefined,
+                result: [inputToken],
                 tree: inputToken,
             }
         },

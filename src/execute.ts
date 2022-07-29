@@ -2,15 +2,15 @@ import { tokennize } from "./tokennize";
 import { Hook, Matcher, ToMatcherArg } from "./types";
 import { execMatcher, toMatcher } from "./util";
 
-// export const execute = <R>(matcher: Matcher<R>, src: string) => {
+// export const execute = (matcher: Matcher, src: string) => {
 //     const tokens = tokennize(src)
 //     return {
 //         ...execMatcher(matcher, tokens),
 //         tokens,
 //     }
 // }
-let _currentExecutor: MatcherExecutor<unknown> | null = null
-export const _setCurrentExecutor = <R>(executor: MatcherExecutor<R>) => _currentExecutor = executor
+let _currentExecutor: MatcherExecutor | null = null
+export const _setCurrentExecutor = (executor: MatcherExecutor) => _currentExecutor = executor
 export const _resetCurrentExecutor = () => _currentExecutor = null
 export const _getCurrentExecutor = () => {
     if (_currentExecutor == null) throw new Error("can not find MatcherExecutor")
@@ -18,16 +18,16 @@ export const _getCurrentExecutor = () => {
 }
 
 
-export class MatcherExecutor<R = undefined>{
-    matcher: Matcher<R>
-    _hooks: Record<string, Hook<any>> = {}
-    constructor(...matcher: ToMatcherArg<R>[]) {
+export class MatcherExecutor {
+    matcher: Matcher
+    _hooks: Record<string, Hook> = {}
+    constructor(...matcher: ToMatcherArg[]) {
         this.matcher = toMatcher(matcher)
     }
-    addHook(hookName: string, hook: Hook<R>) {
+    addHook(hookName: string, hook: Hook) {
         this._hooks[hookName] = hook
     }
-    addHooks(hooks: Record<string, Hook<R>>) {
+    addHooks(hooks: Record<string, Hook>) {
         Object.entries(hooks).forEach(([hookName, hook]) => {
             this.addHook(hookName, hook)
         })
@@ -36,7 +36,7 @@ export class MatcherExecutor<R = undefined>{
         _setCurrentExecutor(this)
         const tokens = tokennize(src)
         const ans = {
-            ...execMatcher<R>(this.matcher, tokens),
+            ...execMatcher(this.matcher, tokens),
             tokens,
         }
         _resetCurrentExecutor()
@@ -44,10 +44,10 @@ export class MatcherExecutor<R = undefined>{
     }
 }
 
-export const execute = <R>(
-    matcher: ToMatcherArg<R>,
+export const execute = (
+    matcher: ToMatcherArg,
     src: string,
-    option?: Partial<{ hooks: Record<string, Hook<R>> }>,
+    option?: Partial<{ hooks: Record<string, Hook> }>,
 ) => {
     const hooks = option?.hooks ?? {}
     const executor = new MatcherExecutor(matcher)
