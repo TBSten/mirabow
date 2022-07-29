@@ -1,4 +1,4 @@
-import { any, arrayScope, capture, def, execute, list, MatcherExecutor, optional, or, repeat, scope, token, toMatcher } from "../src"
+import { any, arrayScope, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, scope, setConfig, token, toMatcher } from "../src"
 import { i } from "./util"
 
 test("is", () => {
@@ -81,37 +81,46 @@ test("list", () => {
         .toBe(false)
 })
 test("define-reference", () => {
-    const m = def(() => [or(a, b), "X"])
-    const a = def(repeat(any(), ","))
-    const b = def(repeat("b"))
+    const matcher = def(() =>
+        [or(a, b), or("SUM", "AVG")]
+    )
+    const a = def(
+        repeat(any(), ",")
+    )
+    const b = def(
+        repeat("b")
+    )
     a.hook = (out) => {
-        i("a hook", out);
         return out.result.map(res => parseInt(res as string))
     }
-    m.hook = (out) => {
-        i("m hook", out);
+    matcher.hook = (out) => {
+        i("m hook", out)
         return [out.result.reduce<number>((ans, value) => ans + (value as number), 0)]
     }
-    const out = execute(m, "1,2,3,X")
-    i(out);
+    const out = execute(matcher, "1,2,3,SUM")
     expect(out.isOk)
         .toBe(true)
+    expect(out.result[0])
+        .toBe(6)
 })
 
-// test("tree", () => {
-//     setConfig({ tree: true })
-//     const executor = new MatcherExecutor(opt(def("id-a")("a")), def("id-rep")(repeat(def("id-grp")(["b", "c"]), "d")), "e")
-//     executor.addHook("id-a", (out) => {
-//         console.log("id-a hook", out);
-//     })
-//     const out = executor.execute("bcdbcde")
-//     expect(out.isOk)
-//         .toBe(true)
-//     expect(out.tree)
-//         .toEqual(
-//             [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
-//         )
-// })
+test("tree", () => {
+    setConfig({ tree: true })
+    const idA = def(() => "a")
+    const idRep = def(() => repeat(idGrp, "d"))
+    const idGrp = def(() => ["b", "c"])
+    const executor = new MatcherExecutor(opt(idA), idRep, "e")
+    executor.addHook("id-a", (out) => {
+        console.log("id-a hook", out);
+    })
+    const out = executor.execute("bcdbcde")
+    expect(out.isOk)
+        .toBe(true)
+    expect(out.tree)
+        .toEqual(
+            [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
+        )
+})
 test("capture-scope", () => {
     const matcher = toMatcher(
         capture("cap-1", "a"),

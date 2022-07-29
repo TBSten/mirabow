@@ -265,13 +265,19 @@ export const debug = (
         },
     }
 }
-export const define = (_matcher: (() => ToMatcherArg) | ToMatcherArg) => {
+export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => {
     const definedMatcher: DefinedMatcher = {
         type: "define",
         debug: `define()`,
         exec(input) {
-            const matcher = _matcher instanceof Function ? _matcher() : _matcher
-            let out = toMatcher(matcher).exec(input)
+            let out = toMatcher(
+                _matcher[0] instanceof Function ?
+                    _matcher[0]() :
+                    (_matcher as ToMatcherArg[])
+            ).exec(input)
+            if (!out.isOk) {
+                return out
+            }
             // emit matcher hook by out
             const newResult = definedMatcher.hook(out)
             if (newResult) {
