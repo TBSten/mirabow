@@ -1,4 +1,4 @@
-import { any, arrayScope, capture, def, define, execute, list, MatcherExecutor, opt, optional, or, ref, repeat, scope, setConfig, token, toMatcher } from "../src"
+import { any, arrayScope, capture, def, execute, list, MatcherExecutor, optional, or, repeat, scope, token, toMatcher } from "../src"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -80,29 +80,27 @@ test("list", () => {
         .toBe(false)
 })
 test("define-reference", () => {
-    define("bin")(repeat(or("0", "1")))
-    const matcher = toMatcher(ref("bin"), "+", ref("bin"))
-    const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("01+10").isOk)
-        .toBe(true)
-    expect(executor.execute("011+010").isOk)
+    const m = def(() => or(a, b))
+    const a = def(repeat("a"))
+    const b = def(repeat("b"))
+    expect(execute(m, "a").isOk)
         .toBe(true)
 })
 
-test("tree", () => {
-    setConfig({ tree: true })
-    const executor = new MatcherExecutor(opt(def("id-a")("a")), def("id-rep")(repeat(def("id-grp")(["b", "c"]), "d")), "e")
-    executor.addHook("id-a", (out) => {
-        console.log("id-a hook", out);
-    })
-    const out = executor.execute("bcdbcde")
-    expect(out.isOk)
-        .toBe(true)
-    expect(out.tree)
-        .toEqual(
-            [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
-        )
-})
+// test("tree", () => {
+//     setConfig({ tree: true })
+//     const executor = new MatcherExecutor(opt(def("id-a")("a")), def("id-rep")(repeat(def("id-grp")(["b", "c"]), "d")), "e")
+//     executor.addHook("id-a", (out) => {
+//         console.log("id-a hook", out);
+//     })
+//     const out = executor.execute("bcdbcde")
+//     expect(out.isOk)
+//         .toBe(true)
+//     expect(out.tree)
+//         .toEqual(
+//             [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
+//         )
+// })
 test("capture-scope", () => {
     const matcher = toMatcher(
         capture("cap-1", "a"),

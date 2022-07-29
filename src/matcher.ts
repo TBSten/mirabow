@@ -265,14 +265,29 @@ export const debug = <R>(
     }
 }
 const _definedMatchers: Record<string, Matcher<any>> = {}
-export const define = (name: string) => <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
-    const matcher = toMatcher(..._matchers)
-    _definedMatchers[name] = matcher
+const _defId = () => Math.floor(Math.random() * 10 ^ 12) + ""
+// export const define = (name: string) => <R>(..._matchers: ToMatcherArg<R>[]): Matcher<R> => {
+//     const matcher = toMatcher(..._matchers)
+//     _definedMatchers[name] = matcher
+//     return {
+//         ...matcher,
+//         exec(input) {
+//             const out = matcher.exec(input)
+//             emitMatcherHook(name, out)
+//             return out
+//         }
+//     }
+// }
+export const define = <R>(_matcher: (() => Matcher<R>) | Matcher<R>): Matcher<R> => {
     return {
-        ...matcher,
+        type: "define",
+        debug: `define()`,
         exec(input) {
+            const id = _defId()
+            const matcher = _matcher instanceof Function ? _matcher() : _matcher
+            _definedMatchers[id] = matcher
             const out = matcher.exec(input)
-            emitMatcherHook(name, out)
+            emitMatcherHook(id, out)
             return out
         }
     }
