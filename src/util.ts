@@ -20,7 +20,6 @@ export const toMatcher = (...args: ToMatcherArg[]): Matcher => {
     return ans
 }
 export const prepareMatcher = (matcher: Matcher) => {
-    matcher.type === "define" && console.log("define", matcher.debug, matcher.isPrepared)
     if (matcher.isPrepared) return
     matcher.isPrepared = true
     matcher.prepare?.()

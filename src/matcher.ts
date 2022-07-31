@@ -295,7 +295,6 @@ export const debug = (
     }
 }
 export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => {
-    console.log("define");
     let preparedMatcher: Matcher | null = null
     const definedMatcher: DefinedMatcher = {
         type: "define",
