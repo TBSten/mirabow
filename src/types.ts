@@ -52,14 +52,18 @@ export type MatcherOutput = {
     isOk: boolean
     tree: TreeNode
 }
-export type Matcher = {
-    type: string,
-    debug: string,
+export type BaseMatcher = {
+    type: string
+    debug: string
+    prepare?: () => void
+    isPrepared: boolean
     exec: (input: MatcherInput) => MatcherOutput
 }
-export type DefinedMatcher = Matcher & {
+export type DefinedMatcher = BaseMatcher & {
+    type: "define"
     hook(out: MatcherOutput): unknown[] | void
 }
+export type Matcher = BaseMatcher | DefinedMatcher
 export type Hook = (output: MatcherOutput | null) => unknown
 export type ToMatcherArgUnit = string | RegExp | Matcher | ToMatcherArgUnit[]
 export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]

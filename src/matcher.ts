@@ -4,7 +4,7 @@ import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
 import { Capture, DefinedMatcher, isScope, isTokens, Matcher, MatcherInput, MatcherOutput, Scope, Tokens, ToMatcherArg } from "./types";
-import { toMatcher } from "./util";
+import { prepareMatcher, toMatcher } from "./util";
 
 export const emptyMatcherOutput = (): MatcherOutput => ({
     isOk: false,
@@ -15,11 +15,13 @@ export const emptyMatcherOutput = (): MatcherOutput => ({
 })
 
 export const is = (arg: string | RegExp): Matcher => {
-    // if (typeof arg === "string") addIsKeywords(arg)
-    addIsKeywords(arg)
     return {
         type: "is",
         debug: `"${arg}"`,
+        isPrepared: false,
+        prepare() {
+            addIsKeywords(arg)
+        },
         exec: (input: MatcherInput) => {
             let regex: RegExp;
             if (typeof arg === "string") {
@@ -51,6 +53,7 @@ export const token = (): Matcher => {
     return {
         type: "any",
         debug: `(any)`,
+        isPrepared: false,
         exec: (input) => {
             const inputToken = input.getNext()
             if (inputToken) {
@@ -76,9 +79,16 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
+    // if (matchers.length === 1) return matchers[0]
     return {
         type: "group",
         debug: `${matchers.map(m => m.debug).join(" ")}`,
+        isPrepared: false,
+        prepare() {
+            matchers.forEach(m => {
+                prepareMatcher(m)
+            })
+        },
         exec: (input) => {
             let ans: MatcherOutput = {
                 isOk: true,
@@ -150,6 +160,10 @@ export const or = (..._matchers: ToMatcherArg[]): Matcher => {
     return {
         type: "or",
         debug: `${matchers.map(m => m.debug).join("|")}`,
+        isPrepared: false,
+        prepare() {
+            matchers.forEach(m => prepareMatcher(m))
+        },
         exec: (input) => {
             const orStartCursor = input.getCursor()
             for (const m of matchers) {
@@ -176,6 +190,10 @@ export const capture = (name: string, _matcher: ToMatcherArg = token()): Matcher
     return {
         type: "capture",
         debug: `<${matcher.debug}>`,
+        isPrepared: false,
+        prepare() {
+            prepareMatcher(matcher)
+        },
         exec(input) {
             const ans = matcher.exec(input)
             if (!ans.isOk) {
@@ -198,6 +216,10 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
     return {
         type: "repeat",
         debug: `(${matchers.map(m => m.debug).join(" ")})*`,
+        isPrepared: false,
+        prepare() {
+            prepareMatcher(matcher)
+        },
         exec(input) {
             let cur = input.getCursor()
             let ans: MatcherOutput = {
@@ -225,6 +247,10 @@ export const optional = (...args: ToMatcherArg[]): Matcher => {
     return {
         type: "optional",
         debug: `(${matcher.debug})?`,
+        isPrepared: false,
+        prepare() {
+            prepareMatcher(matcher)
+        },
         exec(input) {
             const optStartCur = input.getCursor()
             const matcherOut = matcher.exec(input)
@@ -258,6 +284,9 @@ export const debug = (
     return {
         ...matcher,
         debug,
+        prepare() {
+            prepareMatcher(matcher)
+        },
         exec(input) {
             const ans = matcher.exec(input)
             if (hook) hook(input, ans)
@@ -266,15 +295,24 @@ export const debug = (
     }
 }
 export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => {
+    console.log("define");
+    let preparedMatcher: Matcher | null = null
     const definedMatcher: DefinedMatcher = {
         type: "define",
-        debug: `define()`,
-        exec(input) {
-            let out = toMatcher(
+        debug: `define(???)`,
+        isPrepared: false,
+        prepare() {
+            preparedMatcher = toMatcher(
                 _matcher[0] instanceof Function ?
                     _matcher[0]() :
                     (_matcher as ToMatcherArg[])
-            ).exec(input)
+            )
+            prepareMatcher(preparedMatcher)
+            preparedMatcher.debug = `debug(${preparedMatcher.debug})`
+        },
+        exec(input) {
+            if (!preparedMatcher) throw new Error(`define matcher is not prepared . prease call this matcher's prepare`)
+            let out = preparedMatcher!.exec(input)
             if (!out.isOk) {
                 return out
             }
@@ -296,6 +334,10 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
     return {
         type: "scope",
         debug: `scope(${name}){ ${matcher.debug} }`,
+        isPrepared: false,
+        prepare() {
+            prepareMatcher(matcher)
+        },
         exec(input) {
             const ans = matcher.exec(input)
             ans.capture = {
@@ -312,6 +354,10 @@ export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher =
     return {
         type: "scope",
         debug: `arrayScope(${name}){ ${matcher.debug} }`,
+        isPrepared: false,
+        prepare() {
+            prepareMatcher(matcher)
+        },
         exec(input) {
             const ans = matcher.exec(input)
             ans.capture = {
@@ -327,6 +373,10 @@ export const not = (matcher: Matcher): Matcher => {
         ...matcher,
         type: "not",
         debug: `!(${matcher.debug})`,
+        isPrepared: false,
+        prepare() {
+            prepareMatcher(matcher)
+        },
         exec(input) {
             const out = matcher.exec(input)
             return {
@@ -341,6 +391,7 @@ export const anyKeyword = (): Matcher => {
     return {
         type: "someKeyword",
         debug: `someKeyword`,
+        isPrepared: false,
         exec(input) {
             const inputToken = input.getNext()
             if (!inputToken) return emptyMatcherOutput()

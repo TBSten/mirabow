@@ -13,6 +13,7 @@ const sortKeywords = (keywords: Iterable<Keyword>) => Array.from(keywords).sort(
         return b.length - a.length
     }
 })
+export const clearIsKeywords = () => _isKeywords.clear()
 export const getIsKeywords = () => sortKeywords(_isKeywords.values())
 export const addIsKeywords = (isKeywords: Keyword) => _isKeywords.add(isKeywords)
 export const hitIsKeyword = (keyword: Keyword, target: string) => {

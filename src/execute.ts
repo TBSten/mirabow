@@ -1,6 +1,6 @@
 import { tokennize } from "./tokennize";
 import { Hook, Matcher, ToMatcherArg } from "./types";
-import { execMatcher, toMatcher } from "./util";
+import { execMatcher, prepareMatcher, toMatcher } from "./util";
 
 // export const execute = (matcher: Matcher, src: string) => {
 //     const tokens = tokennize(src)
@@ -34,6 +34,7 @@ export class MatcherExecutor {
     }
     execute(src: string) {
         _setCurrentExecutor(this)
+        prepareMatcher(this.matcher)
         const tokens = tokennize(src)
         const ans = {
             ...execMatcher(this.matcher, tokens),

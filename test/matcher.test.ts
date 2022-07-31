@@ -1,5 +1,4 @@
 import { any, arrayScope, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, scope, setConfig, token, toMatcher } from "../src"
-import { i } from "./util"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -94,7 +93,6 @@ test("define-reference", () => {
         return out.result.map(res => parseInt(res as string))
     }
     matcher.hook = (out) => {
-        i("m hook", out)
         return [out.result.reduce<number>((ans, value) => ans + (value as number), 0)]
     }
     const out = execute(matcher, "1,2,3,SUM")
@@ -111,7 +109,7 @@ test("tree", () => {
     const idGrp = def(() => ["b", "c"])
     const executor = new MatcherExecutor(opt(idA), idRep, "e")
     executor.addHook("id-a", (out) => {
-        console.log("id-a hook", out);
+        console.log("id-a hook",);
     })
     const out = executor.execute("bcdbcde")
     expect(out.isOk)
@@ -176,4 +174,13 @@ test("capture-scope-in-group", () => {
 test("not", () => { })
 test("anyKeyword", () => { })
 
+test("is matcher in def", () => {
+    const m1 = def(() =>
+        ["N", "M", "L", m2]
+    )
+    const m2 = def(() =>
+        ["N", "M", "L",]
+    )
+    const out = execute(m1, "NMLNML")
+})
 

@@ -1,19 +1,29 @@
-import { group, is } from "./matcher"
-import { Matcher, Tokens, ToMatcherArg } from "./types"
+import { group, is } from "./matcher";
+import { Matcher, Tokens, ToMatcherArg } from "./types";
 
 export const toMatcher = (...args: ToMatcherArg[]): Matcher => {
+    let ans;
     const first = args[0]
-    if (args.length === 1) {
+    if (args.length <= 0) {
+        throw new Error("not implement")
+    } else if (args.length === 1) {
         if (typeof first === "string" || first instanceof RegExp) {
-            return is(first)
+            ans = is(first)
         } else if (first instanceof Array) {
-            return group(...first.map(a => toMatcher(a)))
+            ans = group(...first.map(a => toMatcher(a)))
         } else {
-            return first
+            ans = first
         }
     } else {
-        return group(...args.map(a => toMatcher(a)))
+        ans = group(...args.map(a => toMatcher(a)))
     }
+    return ans
+}
+export const prepareMatcher = (matcher: Matcher) => {
+    matcher.type === "define" && console.log("define", matcher.debug, matcher.isPrepared)
+    if (matcher.isPrepared) return
+    matcher.isPrepared = true
+    matcher.prepare?.()
 }
 export const execMatcher = (
     matcher: ToMatcherArg,
