@@ -83,12 +83,16 @@ test("define-reference", () => {
     const matcher = def(() =>
         [or(a, b), or("SUM", "AVG")]
     )
-    const a = def(
-        repeat(any(), ",")
+    const a = def(() =>
+        repeat(a_num, ",")
     )
+    const a_num = def(any())
     const b = def(
         repeat("b")
     )
+    a_num.hook = (out) => {
+        return [parseFloat(out.match[0])]
+    }
     a.hook = (out) => {
         return out.result.map(res => parseInt(res as string))
     }
