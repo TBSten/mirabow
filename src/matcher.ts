@@ -405,7 +405,7 @@ export const anyKeyword = (): Matcher => {
                 isOk: isHit,
                 capture: {},
                 match: [inputToken],
-                result: [inputToken],
+                result: [],
                 tree: inputToken,
             }
         },
