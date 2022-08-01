@@ -64,7 +64,7 @@ export type DefinedMatcher = BaseMatcher & {
     hook(out: MatcherOutput): unknown[] | void
 }
 export type Matcher = BaseMatcher | DefinedMatcher
-export type Hook = (output: MatcherOutput | null) => unknown
+export type Hook = (output: MatcherOutput) => unknown
 export type ToMatcherArgUnit = string | RegExp | Matcher | ToMatcherArgUnit[]
 export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]
 

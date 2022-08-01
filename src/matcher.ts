@@ -278,7 +278,7 @@ export const list = (args: ToMatcherArg[] | ToMatcherArg, joiner: ToMatcherArg =
 export const debug = (
     debug: string,
     _matcher: ToMatcherArg,
-    hook?: (input: MatcherInput, output: MatcherOutput | null) => unknown,
+    hook?: (input: MatcherInput, output: MatcherOutput) => unknown,
 ): Matcher => {
     const matcher = toMatcher(_matcher)
     return {
