@@ -26,10 +26,11 @@ export function isScope(arg: any): arg is Scope {
         !isTokens(arg)
     )
 }
-export type CaptureNode =
-    Tokens[] |
-    Scope |     //scope
-    Scope[]     //arrayScope
+type CaptureNode = {
+    tokens?: Tokens[],
+    scope?: Scope,
+    arrayScope?: Scope[],
+}
 export function isCaptureNode(arg: any): arg is CaptureNode {
     return (
         (

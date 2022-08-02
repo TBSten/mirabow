@@ -3,7 +3,7 @@ import { getCaptureArrayScope, getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
-import { Capture, DefinedMatcher, isScope, isTokens, Matcher, MatcherInput, MatcherOutput, Scope, Tokens, ToMatcherArg } from "./types";
+import { DefinedMatcher, Matcher, MatcherInput, MatcherOutput, Scope, ToMatcherArg } from "./types";
 import { prepareMatcher, toMatcher } from "./util";
 
 export const emptyMatcherOutput = (): MatcherOutput => ({
@@ -121,16 +121,14 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
     Object.entries(out.capture).forEach(([key, value]) => {
         if (ans.capture[key]) {
             //keyは既にキャプチャされたことがある
-            const isArray = value instanceof Array
-            // console.log(value, isArray && isScope(value[0]));
-            if (isArray && isTokens(value[0])) {
+            if (value.tokens) {
                 //value は Tokens
-                const tokens = value as Tokens[]
-                ans.capture[key] = [...getCaptureTokens(ans.capture, key), ...tokens]
-            } else if (isArray && isScope(value[0])) {
+                const tokens = value.tokens
+                ans.capture[key].tokens = [...getCaptureTokens(ans.capture, key), ...tokens]
+            } else if (value.arrayScope) {
                 //value は Scope[]
-                const scopes = value as Scope[]
-                ans.capture[key] = [...getCaptureArrayScope(ans.capture, key), ...scopes]
+                const scopes = value.arrayScope
+                ans.capture[key].arrayScope = [...getCaptureArrayScope(ans.capture, key), ...scopes]
             } else {
                 //valueが不正
                 throw new Error(`invalid value as CaptureNode key:${key} value:${inspect(value, { colors: false, depth: 10 })}`)
@@ -204,8 +202,8 @@ export const capture = (name: string, _matcher: ToMatcherArg = token()): Matcher
                 capture: {
                     ...ans.capture,
                     // [name]: [...(ans.capture[name] ?? []), ans.match],
-                    [name]: [...(getCaptureTokens(ans.capture, name, [])), ans.match],
-                } as Capture,
+                    [name]: { tokens: [...(getCaptureTokens(ans.capture, name, [])), ans.match] },
+                },
             }
         },
     }
@@ -341,9 +339,11 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
             const ans = matcher.exec(input)
             ans.capture = {
                 [name]: {
-                    ...ans.capture
-                } as Scope
-            }
+                    scope: {
+                        ...ans.capture
+                    }
+                }
+            } as Scope
             return ans
         }
     }
@@ -360,7 +360,7 @@ export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher =
         exec(input) {
             const ans = matcher.exec(input)
             ans.capture = {
-                [name]: [ans.capture]
+                [name]: { arrayScope: [ans.capture] }
             } as Scope
             return ans
         },

@@ -1,4 +1,4 @@
-import { any, arrayScope, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, scope, setConfig, token, toMatcher } from "../src"
+import { any, arrayScope, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, Scope, scope, setConfig, token, toMatcher } from "../src"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -46,7 +46,7 @@ test("capture", () => {
     const out = executor.execute("abc")
     expect(out.isOk)
         .toBe(true)
-    expect(out.capture.test)
+    expect(out.capture.test?.tokens)
         .toEqual([["b"]])
 })
 test("repeat", () => {
@@ -138,17 +138,21 @@ test("capture-scope", () => {
     )
     const out = new MatcherExecutor(matcher).execute("abcdef")
     expect(out.capture)
-        .toEqual({
-            "cap-1": [["a"]],
+        .toEqual<Scope>({
+            "cap-1": { tokens: [["a"]] },
             "scope-1": {
-                "cap-2": [["b"]],
-                "scope-2": {
-                    "cap-3": [["c"]],
-                    "cap-4": [["d"]]
+                scope: {
+                    "cap-2": { tokens: [["b"]] },
+                    "scope-2": {
+                        scope: {
+                            "cap-3": { tokens: [["c"]] },
+                            "cap-4": { tokens: [["d"]] }
+                        }
+                    },
+                    "cap-5": { tokens: [["e"]] }
                 },
-                "cap-5": [["e"]],
             },
-            "cap-6": [["f"]],
+            "cap-6": { tokens: [["f"]] },
         })
 })
 test("capture-scope-in-group", () => {
@@ -164,14 +168,16 @@ test("capture-scope-in-group", () => {
     const out = execute(matcher, "(ba)(aa)")
     expect(out.capture)
         .toEqual(expect.objectContaining({
-            "ab-list": [
-                {
-                    "cap-ab": [["b"], ["a"]],
-                },
-                {
-                    "cap-ab": [["a"], ["a"]],
-                },
-            ],
+            "ab-list": {
+                arrayScope: [
+                    {
+                        "cap-ab": { tokens: [["b"], ["a"]] },
+                    },
+                    {
+                        "cap-ab": { tokens: [["a"], ["a"]] },
+                    },
+                ]
+            },
         }))
 })
 
