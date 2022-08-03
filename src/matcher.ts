@@ -1,5 +1,4 @@
-import { inspect } from "util";
-import { getCaptureArrayScope, getCaptureTokens } from "./capture";
+import { getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
@@ -122,16 +121,16 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
         if (ans.capture[key]) {
             //keyは既にキャプチャされたことがある
             if (value.tokens) {
-                //value は Tokens
                 const tokens = value.tokens
-                ans.capture[key].tokens = [...getCaptureTokens(ans.capture, key), ...tokens]
-            } else if (value.arrayScope) {
-                //value は Scope[]
+                ans.capture[key].tokens = [...(ans.capture[key].tokens ?? []), ...tokens]
+            }
+            if (value.arrayScope) {
                 const scopes = value.arrayScope
-                ans.capture[key].arrayScope = [...getCaptureArrayScope(ans.capture, key), ...scopes]
-            } else {
-                //valueが不正
-                throw new Error(`invalid value as CaptureNode key:${key} value:${inspect(value, { colors: false, depth: 10 })}`)
+                ans.capture[key].arrayScope = [...(ans.capture[key].arrayScope ?? []), ...scopes]
+            }
+            if (value.scope) {
+                const scope = value.scope
+                ans.capture[key].scope = { ...scope }
             }
         } else {
             //keyはまだキャプチャされたことがない

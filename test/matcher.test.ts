@@ -193,4 +193,12 @@ test("is matcher in def", () => {
     )
     const out = execute(m1, "NMLNML")
 })
-
+test("duplicate CaptureNode name", () => {
+    const char = def(() => or("a", "b", "c"))
+    const m = def(() => [
+        capture("key", char),
+        scope("key")(char),
+        arrayScope("key")(char),
+    ])
+    const out = execute(m, `abca`)
+})
