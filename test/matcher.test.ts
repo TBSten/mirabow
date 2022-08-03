@@ -1,5 +1,4 @@
 import { any, arrayScope, cap, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, Scope, scope, setConfig, token, toMatcher } from "../src"
-import { i } from "./util"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -210,11 +209,4 @@ test("duplicate CaptureNode name", () => {
         console.error(out);
         throw new Error("invalid input")
     }
-    i("???????", out.capture)
-    i(
-        out.capture
-        ["or-conditions"]?.arrayScope?.map(or =>
-            or["and-conditions"]?.tokens?.map(tokens => tokens.join(" "))
-        )
-    )
 })

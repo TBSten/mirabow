@@ -1,4 +1,3 @@
-import { inspect } from "util";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
@@ -342,7 +341,6 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
         },
         exec(input) {
             const ans = { ...matcher.exec(input) }
-            console.log("scope", name, inspect(ans, { colors: true, depth: 100 }));
             ans.capture = {
                 [name]: {
                     ...(ans.capture[name] ?? {}),
