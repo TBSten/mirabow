@@ -1,7 +1,7 @@
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
-import { DefinedMatcher, Matcher, MatcherInput, MatcherOutput, Scope, ToMatcherArg } from "./types";
+import { DefinedMatcher, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
 import { prepareMatcher, toMatcher } from "./util";
 
 export const emptyMatcherOutput = (): MatcherOutput => ({
@@ -332,13 +332,10 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
         },
         exec(input) {
             const ans = matcher.exec(input)
-            ans.capture = {
-                [name]: {
-                    scope: {
-                        ...ans.capture
-                    }
-                }
-            } as Scope
+            if (!ans.capture[name]) {
+                ans.capture[name] = {}
+            }
+            ans.capture[name].scope = ans.capture
             return ans
         }
     }
@@ -354,9 +351,10 @@ export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher =
         },
         exec(input) {
             const ans = matcher.exec(input)
-            ans.capture = {
-                [name]: { arrayScope: [ans.capture] }
-            } as Scope
+            if (!ans.capture[name]) {
+                ans.capture[name] = {}
+            }
+            ans.capture[name].arrayScope = [ans.capture]
             return ans
         },
     }
