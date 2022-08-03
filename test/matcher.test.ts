@@ -1,4 +1,5 @@
-import { any, arrayScope, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, Scope, scope, setConfig, token, toMatcher } from "../src"
+import { any, arrayScope, cap, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, Scope, scope, setConfig, token, toMatcher } from "../src"
+import { i } from "./util"
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -194,11 +195,26 @@ test("is matcher in def", () => {
     const out = execute(m1, "NMLNML")
 })
 test("duplicate CaptureNode name", () => {
-    const char = def(() => or("a", "b", "c"))
+    const condition = def(() => [token(), or("=", "<>"), token()])
     const m = def(() => [
-        capture("key", char),
-        scope("key")(char),
-        arrayScope("key")(char),
+        list(
+            cap("or-conditions", arrayScope("or-conditions")(list(
+                cap("and-conditions", condition)
+                , "and"
+            )))
+            , "or"
+        )
     ])
-    const out = execute(m, `abca`)
+    const out = execute(m, `a = b or c <> d and e = f`)
+    if (!out.isOk) {
+        console.error(out);
+        throw new Error("invalid input")
+    }
+    i("???????", out.capture)
+    i(
+        out.capture
+        ["or-conditions"]?.arrayScope?.map(or =>
+            or["and-conditions"]?.tokens?.map(tokens => tokens.join(" "))
+        )
+    )
 })
