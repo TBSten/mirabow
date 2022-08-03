@@ -1,3 +1,4 @@
+import { inspect } from "util";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
@@ -121,15 +122,24 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
             //keyは既にキャプチャされたことがある
             if (value.tokens) {
                 const tokens = value.tokens
-                ans.capture[key].tokens = [...(ans.capture[key].tokens ?? []), ...tokens]
+                ans.capture[key] = {
+                    ...ans.capture[key],
+                    tokens: [...(ans.capture[key].tokens ?? []), ...tokens],
+                }
             }
             if (value.arrayScope) {
                 const scopes = value.arrayScope
-                ans.capture[key].arrayScope = [...(ans.capture[key].arrayScope ?? []), ...scopes]
+                ans.capture[key] = {
+                    ...ans.capture[key],
+                    arrayScope: [...(ans.capture[key].arrayScope ?? []), ...scopes],
+                }
             }
             if (value.scope) {
                 const scope = value.scope
-                ans.capture[key].scope = { ...scope }
+                ans.capture[key] = {
+                    ...ans.capture[key],
+                    scope,
+                }
             }
         } else {
             //keyはまだキャプチャされたことがない
@@ -195,7 +205,7 @@ export const capture = (name: string, _matcher: ToMatcherArg = token()): Matcher
             if (!ans.isOk) {
                 return emptyMatcherOutput()
             }
-            if (!ans.capture[name]?.tokens) {
+            if (!ans.capture[name]) {
                 ans.capture[name] = {}
             }
             ans.capture[name].tokens = [...(ans.capture[name]?.tokens ?? []), ans.match]
@@ -331,11 +341,14 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = matcher.exec(input)
-            if (!ans.capture[name]) {
-                ans.capture[name] = {}
+            const ans = { ...matcher.exec(input) }
+            console.log("scope", name, inspect(ans, { colors: true, depth: 100 }));
+            ans.capture = {
+                [name]: {
+                    ...(ans.capture[name] ?? {}),
+                    scope: ans.capture,
+                }
             }
-            ans.capture[name].scope = ans.capture
             return ans
         }
     }
@@ -350,11 +363,13 @@ export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher =
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = matcher.exec(input)
-            if (!ans.capture[name]) {
-                ans.capture[name] = {}
+            const ans = { ...matcher.exec(input) }
+            ans.capture = {
+                [name]: {
+                    ...(ans.capture[name] ?? {}),
+                    arrayScope: [ans.capture],
+                }
             }
-            ans.capture[name].arrayScope = [ans.capture]
             return ans
         },
     }
