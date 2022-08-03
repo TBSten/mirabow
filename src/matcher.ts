@@ -1,4 +1,3 @@
-import { getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
 import { esc } from "./helper/escape";
 import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
@@ -196,14 +195,11 @@ export const capture = (name: string, _matcher: ToMatcherArg = token()): Matcher
             if (!ans.isOk) {
                 return emptyMatcherOutput()
             }
-            return {
-                ...ans,
-                capture: {
-                    ...ans.capture,
-                    // [name]: [...(ans.capture[name] ?? []), ans.match],
-                    [name]: { tokens: [...(getCaptureTokens(ans.capture, name, [])), ans.match] },
-                },
+            if (!ans.capture[name]?.tokens) {
+                ans.capture[name] = {}
             }
+            ans.capture[name].tokens = [...(ans.capture[name]?.tokens ?? []), ans.match]
+            return ans
         },
     }
 }
