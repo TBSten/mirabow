@@ -96,7 +96,7 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
                 tree: [],
             }
             for (const m of matchers) {
-                const out = m.exec(input)
+                const out = executeMatcher(m, input)
                 if (!out.isOk) {
                     ans.isOk = false
                     break
@@ -172,7 +172,7 @@ export const or = (..._matchers: ToMatcherArg[]): Matcher => {
         exec: (input) => {
             const orStartCursor = input.getCursor()
             for (const m of matchers) {
-                const out = m.exec(input)
+                const out = executeMatcher(m, input)
                 if (!out.isOk) {
                     //inputを元に戻す
                     input.setCursor(orStartCursor)
@@ -200,15 +200,15 @@ export const capture = (name: string, _matcher: ToMatcherArg = token()): Matcher
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = matcher.exec(input)
-            if (!ans.isOk) {
+            const out = executeMatcher(matcher, input)
+            if (!out.isOk) {
                 return emptyMatcherOutput()
             }
-            if (!ans.capture[name]) {
-                ans.capture[name] = {}
+            if (!out.capture[name]) {
+                out.capture[name] = {}
             }
-            ans.capture[name].tokens = [...(ans.capture[name]?.tokens ?? []), ans.match]
-            return ans
+            out.capture[name].tokens = [...(out.capture[name]?.tokens ?? []), out.match]
+            return out
         },
     }
 }
@@ -232,7 +232,7 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
                 tree: treeNode([]),
             }
             while (input.hasNext()) {
-                const out = matcher.exec(input)
+                const out = executeMatcher(matcher, input)
                 if (!out.isOk) {
                     input.setCursor(cur)
                     break
@@ -255,7 +255,7 @@ export const optional = (...args: ToMatcherArg[]): Matcher => {
         },
         exec(input) {
             const optStartCur = input.getCursor()
-            const matcherOut = matcher.exec(input)
+            const matcherOut = executeMatcher(matcher, input)
             if (!matcherOut.isOk) {
                 input.setCursor(optStartCur)
                 return {
@@ -290,9 +290,9 @@ export const debug = (
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = matcher.exec(input)
-            if (hook) hook(input, ans)
-            return ans
+            const out = executeMatcher(matcher, input)
+            if (hook) hook(input, out)
+            return out
         },
     }
 }
@@ -313,7 +313,7 @@ export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => 
         },
         exec(input) {
             if (!preparedMatcher) throw new Error(`define matcher is not prepared . prease call this matcher's prepare`)
-            let out = preparedMatcher!.exec(input)
+            const out = executeMatcher(preparedMatcher, input)
             if (!out.isOk) {
                 return out
             }
@@ -340,7 +340,8 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = { ...matcher.exec(input) }
+            const out = executeMatcher(matcher, input)
+            const ans = { ...out }
             ans.capture = {
                 [name]: {
                     ...(ans.capture[name] ?? {}),
@@ -361,7 +362,8 @@ export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher =
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = { ...matcher.exec(input) }
+            const out = executeMatcher(matcher, input)
+            const ans = { ...out }
             ans.capture = {
                 [name]: {
                     ...(ans.capture[name] ?? {}),
@@ -383,7 +385,7 @@ export const not = (matcher: Matcher): Matcher => {
             prepareMatcher(matcher)
         },
         exec(input) {
-            const out = matcher.exec(input)
+            const out = executeMatcher(matcher, input)
             return {
                 ...out,
                 isOk: !out.isOk,
@@ -416,4 +418,9 @@ export const anyKeyword = (): Matcher => {
             }
         },
     }
+}
+
+//Matcher内で他のMatcherを実行する
+const executeMatcher = (matcher: Matcher, input: MatcherInput) => {
+    return matcher.exec(input)
 }
