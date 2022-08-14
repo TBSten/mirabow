@@ -87,3 +87,8 @@ export type Config = {
 }
 
 export type MatcherFactory<Args extends Array<any>, R> = (...args: Args) => Matcher
+
+export type ExecuteOutput = MatcherOutput & {
+    tokens: Tokens
+    errors: unknown[]
+}

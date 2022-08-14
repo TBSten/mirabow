@@ -1,6 +1,6 @@
 import { throwMirabowError } from "./error";
 import { tokennize } from "./tokennize";
-import { Hook, Matcher, ToMatcherArg } from "./types";
+import { ExecuteOutput, Hook, Matcher, ToMatcherArg } from "./types";
 import { execMatcher, prepareMatcher, toMatcher } from "./util";
 
 // export const execute = (matcher: Matcher, src: string) => {
@@ -33,7 +33,7 @@ export class MatcherExecutor {
             this.addHook(hookName, hook)
         })
     }
-    execute(src: string) {
+    execute(src: string): ExecuteOutput {
         try {
             _setCurrentExecutor(this)
             prepareMatcher(this.matcher)
@@ -41,6 +41,7 @@ export class MatcherExecutor {
             const ans = {
                 ...execMatcher(this.matcher, tokens),
                 tokens,
+                errors: [] as unknown[],
             }
             return ans
         } catch (e) {
@@ -51,6 +52,7 @@ export class MatcherExecutor {
                 match: [],
                 result: [],
                 tree: [],
+                errors: [e],
             }
         } finally {
             _resetCurrentExecutor()
