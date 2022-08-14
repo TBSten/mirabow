@@ -1,5 +1,6 @@
+import { throwMirabowError } from "./error";
 import { tokennize } from "./tokennize";
-import { Hook, Matcher, ToMatcherArg } from "./types";
+import { ExecuteOutput, Hook, Matcher, ToMatcherArg } from "./types";
 import { execMatcher, prepareMatcher, toMatcher } from "./util";
 
 // export const execute = (matcher: Matcher, src: string) => {
@@ -13,7 +14,7 @@ let _currentExecutor: MatcherExecutor | null = null
 export const _setCurrentExecutor = (executor: MatcherExecutor) => _currentExecutor = executor
 export const _resetCurrentExecutor = () => _currentExecutor = null
 export const _getCurrentExecutor = () => {
-    if (_currentExecutor == null) throw new Error("can not find MatcherExecutor")
+    if (_currentExecutor == null) return throwMirabowError(e => e.executor.cannotFind)
     return _currentExecutor
 }
 
@@ -32,16 +33,30 @@ export class MatcherExecutor {
             this.addHook(hookName, hook)
         })
     }
-    execute(src: string) {
-        _setCurrentExecutor(this)
-        prepareMatcher(this.matcher)
-        const tokens = tokennize(src)
-        const ans = {
-            ...execMatcher(this.matcher, tokens),
-            tokens,
+    execute(src: string): ExecuteOutput {
+        try {
+            _setCurrentExecutor(this)
+            prepareMatcher(this.matcher)
+            const tokens = tokennize(src, this.matcher)
+            const ans = {
+                ...execMatcher(this.matcher, tokens),
+                tokens,
+                errors: [] as unknown[],
+            }
+            return ans
+        } catch (e) {
+            return {
+                isOk: false,
+                tokens: [],
+                capture: {},
+                match: [],
+                result: [],
+                tree: [],
+                errors: [e],
+            }
+        } finally {
+            _resetCurrentExecutor()
         }
-        _resetCurrentExecutor()
-        return ans
     }
 }
 

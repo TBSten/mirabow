@@ -1,6 +1,7 @@
 import { getConfig } from "./config";
+import { throwMirabowError } from "./error";
 import { esc } from "./helper/escape";
-import { Tokens } from "./types";
+import { Matcher, Tokens } from "./types";
 
 export type Keyword = string | RegExp
 const _isKeywords = new Set<Keyword>()
@@ -21,17 +22,25 @@ export const hitIsKeyword = (keyword: Keyword, target: string) => {
     const ignoreCase = getConfig().ignoreCase
     return !!target.match(new RegExp(`^${regex}$`, ignoreCase ? "i" : ""))
 }
+export const hitAnyIsKeywords = (target: string) => {
+    const keywords = getIsKeywords()
+    for (let kw of keywords) {
+        if (hitIsKeyword(kw, target)) {
+            return true
+        }
+    }
+    return false
+}
 
-export const tokennize = (source: string, keywords: Keyword[] = getIsKeywords()): Tokens => {
-    const escKeywords = sortKeywords(
-        (keywords.map(s => typeof s === "string" ? esc(s) : s))
-    ).map(keyword => keyword instanceof RegExp ? keyword.source : keyword)
-    const ignoreString = getConfig().ignoreString
-    const ignoreCase = getConfig().ignoreCase
-    const regex = `(${escKeywords.join("|")})|${ignoreString}+`
-    const ans: string[] = source
-        .split(new RegExp(regex, ignoreCase ? "i" : ""))
-        .filter(s => s && !s.match(new RegExp(`^${ignoreString}*$`)))
-    return ans
+export const tokennize = (source: string, matcher: Matcher): Tokens => {
+    const sourceArr = [...source]
+    const lexOut = matcher.lex(source)
+    if (!lexOut.ok) {
+        return throwMirabowError(e => e.tokennize.fail(lexOut))
+    }
+    if (lexOut.index < sourceArr.length) {
+        return throwMirabowError(e => e.tokennize.missing(lexOut))
+    }
+    return lexOut.result
 }
 

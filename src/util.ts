@@ -1,3 +1,4 @@
+import { throwMirabowError } from "./error";
 import { group, is } from "./matcher";
 import { Matcher, Tokens, ToMatcherArg } from "./types";
 
@@ -5,7 +6,7 @@ export const toMatcher = (...args: ToMatcherArg[]): Matcher => {
     let ans;
     const first = args[0]
     if (args.length <= 0) {
-        throw new Error("not implement")
+        return throwMirabowError(e => e.notImplement)
     } else if (args.length === 1) {
         if (typeof first === "string" || first instanceof RegExp) {
             ans = is(first)

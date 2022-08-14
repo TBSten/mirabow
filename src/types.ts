@@ -9,6 +9,15 @@ export function isTokens(arg: any): arg is Tokens {
         isToken(arg[0])
     )
 }
+
+export type LexInput = string
+
+export type LexOutput = {
+    ok: boolean
+    result: string[]
+    index: number
+}
+
 export type MatcherInput = {
     getNext(): Token | null
     setCursor(cursor: number): void
@@ -26,10 +35,11 @@ export function isScope(arg: any): arg is Scope {
         !isTokens(arg)
     )
 }
-export type CaptureNode =
-    Tokens[] |
-    Scope |     //scope
-    Scope[]     //arrayScope
+type CaptureNode = {
+    tokens?: Tokens[],
+    scope?: Scope,
+    arrayScope?: Scope[],
+}
 export function isCaptureNode(arg: any): arg is CaptureNode {
     return (
         (
@@ -57,6 +67,8 @@ export type BaseMatcher = {
     debug: string
     prepare?: () => void
     isPrepared: boolean
+    keywords: (string | RegExp)[]
+    lex: (src: LexInput) => LexOutput
     exec: (input: MatcherInput) => MatcherOutput
 }
 export type DefinedMatcher = BaseMatcher & {
@@ -71,7 +83,12 @@ export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]
 export type Config = {
     ignoreCase: boolean;
     tree: boolean;
-    ignoreString: string;
+    ignoreString: RegExp;
 }
 
 export type MatcherFactory<Args extends Array<any>, R> = (...args: Args) => Matcher
+
+export type ExecuteOutput = MatcherOutput & {
+    tokens: Tokens
+    errors: unknown[]
+}

@@ -1,11 +1,11 @@
-import { isCaptureNode, isScope, isToken, isTokens, Scope, Token, Tokens } from "../src"
+import { isCaptureNode, isScope, isToken, isTokens, Token, Tokens } from "../src"
 
 const example = {
     token: "a" as Token,
     tokens: ["a", "b"] as Tokens,
     scope: {
-        "cap": [["a"]],
-    } as Scope
+        "cap": { tokens: [["a"]] },
+    }
 } as const
 
 test("Token type guard", () => {

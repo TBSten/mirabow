@@ -1,9 +1,10 @@
-import { inspect } from "util";
-import { getCaptureArrayScope, getCaptureTokens } from "./capture";
 import { getConfig, treeNode } from "./config";
+import { throwMirabowError } from "./error";
 import { esc } from "./helper/escape";
-import { addIsKeywords, getIsKeywords, hitIsKeyword } from "./tokennize";
-import { Capture, DefinedMatcher, isScope, isTokens, Matcher, MatcherInput, MatcherOutput, Scope, Tokens, ToMatcherArg } from "./types";
+import { isAscii } from "./helper/isAscii";
+import { skipIgnoreString } from "./lex/skip";
+import { addIsKeywords, getIsKeywords, hitAnyIsKeywords, hitIsKeyword } from "./tokennize";
+import { DefinedMatcher, LexOutput, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
 import { prepareMatcher, toMatcher } from "./util";
 
 export const emptyMatcherOutput = (): MatcherOutput => ({
@@ -21,6 +22,29 @@ export const is = (arg: string | RegExp): Matcher => {
         isPrepared: false,
         prepare() {
             addIsKeywords(arg)
+        },
+        keywords: [arg],
+        lex(src) {
+            const ignoreCase = getConfig().ignoreCase
+            const regexSrc = typeof arg === "string" ? esc(arg) : arg.source
+            const regex = new RegExp(`^(${regexSrc})`, ignoreCase ? "i" : "")
+            const regexRes = src.match(regex)
+            if (regexRes) {
+                const ans = regexRes[1]
+                // console.log("is lex ok", arg, ">>>", `"${src}"`, ">>>", `"${ans}"`)
+                return {
+                    ok: true,
+                    result: [ans],
+                    index: [...ans].length,
+                }
+            } else {
+                // console.log("is lex fail", arg, ">>>", `"${src}"`)
+                return {
+                    ok: false,
+                    result: [],
+                    index: 0,
+                }
+            }
         },
         exec: (input: MatcherInput) => {
             let regex: RegExp;
@@ -49,11 +73,41 @@ export const is = (arg: string | RegExp): Matcher => {
     }
 }
 //キーワードを含めた任意の1トークン
-export const token = (): Matcher => {
+export const identifier = (): Matcher => {
     return {
-        type: "any",
-        debug: `(any)`,
+        type: "identifier",
+        debug: `<identifier>`,
         isPrepared: false,
+        lex(src) {
+            const ignore = getConfig().ignoreString
+            let index = 0
+            let buf = ""
+            for (let char of [...src]) {
+                if (
+                    !ignore.exec(char) ||           //空白文字 または
+                    /[a-zA-Z0-9_$]/.test(char) ||   //識別子として有効なASCII文字 または
+                    !isAscii(char)                  //ASCII文字ではない
+                ) {
+                    buf += char
+                    index++
+                } else {
+                    break
+                }
+            }
+            if (buf === "") {
+                return {
+                    ok: false,
+                    result: [],
+                    index,
+                }
+            }
+            return {
+                ok: true,
+                result: [buf],
+                index,
+            }
+        },
+        keywords: [],
         exec: (input) => {
             const inputToken = input.getNext()
             if (inputToken) {
@@ -70,24 +124,52 @@ export const token = (): Matcher => {
         }
     }
 }
-//キーワード以外の任意の1トークン
-export const any = (): Matcher => {
-    const matcher = debug("<any>", not(anyKeyword()))
-    return matcher
-}
+// //キーワード以外の任意の1トークン
+// export const any = (): Matcher => {
+//     const matcher = debug("<any>", not(anyKeyword()))
+//     return matcher
+// }
 export const group = (..._matchers: ToMatcherArg[]): Matcher => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
-    // if (matchers.length === 1) return matchers[0]
+    const debug = matchers.map(m => m.debug).join(" ")
     return {
         type: "group",
-        debug: `${matchers.map(m => m.debug).join(" ")}`,
+        debug,
         isPrepared: false,
         prepare() {
             matchers.forEach(m => {
                 prepareMatcher(m)
             })
+        },
+        keywords: [],
+        lex: (src) => {
+            const grpOut: LexOutput = {
+                ok: true,
+                result: [],
+                index: 0,
+            }
+            function skipIgnoreS() {
+                const skipLen = skipIgnoreString(src)
+                grpOut.index += skipLen
+                src = [...src].slice(skipLen).join("")
+            }
+            for (let matcher of matchers) {
+                skipIgnoreS()
+                const mOut = matcher.lex(src)
+                if (mOut.ok) {
+                    grpOut.index += mOut.index
+                    grpOut.result.push(...mOut.result)
+                    src = [...src].slice(mOut.index).join("")
+                } else {
+                    grpOut.ok = false
+                    break
+                }
+            }
+            // grpOut.index += skipIgnoreString(src)
+            skipIgnoreS()
+            return grpOut
         },
         exec: (input) => {
             let ans: MatcherOutput = {
@@ -98,7 +180,7 @@ export const group = (..._matchers: ToMatcherArg[]): Matcher => {
                 tree: [],
             }
             for (const m of matchers) {
-                const out = m.exec(input)
+                const out = executeMatcher(m, input)
                 if (!out.isOk) {
                     ans.isOk = false
                     break
@@ -121,19 +203,26 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
     Object.entries(out.capture).forEach(([key, value]) => {
         if (ans.capture[key]) {
             //keyは既にキャプチャされたことがある
-            const isArray = value instanceof Array
-            // console.log(value, isArray && isScope(value[0]));
-            if (isArray && isTokens(value[0])) {
-                //value は Tokens
-                const tokens = value as Tokens[]
-                ans.capture[key] = [...getCaptureTokens(ans.capture, key), ...tokens]
-            } else if (isArray && isScope(value[0])) {
-                //value は Scope[]
-                const scopes = value as Scope[]
-                ans.capture[key] = [...getCaptureArrayScope(ans.capture, key), ...scopes]
-            } else {
-                //valueが不正
-                throw new Error(`invalid value as CaptureNode key:${key} value:${inspect(value, { colors: false, depth: 10 })}`)
+            if (value.tokens) {
+                const tokens = value.tokens
+                ans.capture[key] = {
+                    ...ans.capture[key],
+                    tokens: [...(ans.capture[key].tokens ?? []), ...tokens],
+                }
+            }
+            if (value.arrayScope) {
+                const scopes = value.arrayScope
+                ans.capture[key] = {
+                    ...ans.capture[key],
+                    arrayScope: [...(ans.capture[key].arrayScope ?? []), ...scopes],
+                }
+            }
+            if (value.scope) {
+                const scope = value.scope
+                ans.capture[key] = {
+                    ...ans.capture[key],
+                    scope,
+                }
             }
         } else {
             //keyはまだキャプチャされたことがない
@@ -145,7 +234,7 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
     //tree
     if (getConfig().tree) {
         if (!(ans.tree instanceof Array)) {
-            throw new Error("MatcherOutput.tree must be Array")
+            return throwMirabowError(e => e.matcher.output.tree)
         }
         ans.tree = [...ans.tree, out.tree]
     }
@@ -164,10 +253,24 @@ export const or = (..._matchers: ToMatcherArg[]): Matcher => {
         prepare() {
             matchers.forEach(m => prepareMatcher(m))
         },
+        keywords: [],
+        lex: (src) => {
+            for (let matcher of matchers) {
+                const out = matcher.lex(src)
+                if (out.ok) {
+                    return out
+                }
+            }
+            return {
+                ok: false,
+                index: 0,
+                result: [],
+            }
+        },
         exec: (input) => {
             const orStartCursor = input.getCursor()
             for (const m of matchers) {
-                const out = m.exec(input)
+                const out = executeMatcher(m, input)
                 if (!out.isOk) {
                     //inputを元に戻す
                     input.setCursor(orStartCursor)
@@ -185,28 +288,27 @@ export const or = (..._matchers: ToMatcherArg[]): Matcher => {
         }
     }
 }
-export const capture = (name: string, _matcher: ToMatcherArg = token()): Matcher => {
+export const capture = (name: string, _matcher: ToMatcherArg = /.+/): Matcher => {
     const matcher = toMatcher(_matcher)
     return {
+        ...matcher,
         type: "capture",
         debug: `<${matcher.debug}>`,
         isPrepared: false,
         prepare() {
             prepareMatcher(matcher)
         },
+        keywords: [],
         exec(input) {
-            const ans = matcher.exec(input)
-            if (!ans.isOk) {
+            const out = executeMatcher(matcher, input)
+            if (!out.isOk) {
                 return emptyMatcherOutput()
             }
-            return {
-                ...ans,
-                capture: {
-                    ...ans.capture,
-                    // [name]: [...(ans.capture[name] ?? []), ans.match],
-                    [name]: [...(getCaptureTokens(ans.capture, name, [])), ans.match],
-                } as Capture,
+            if (!out.capture[name]) {
+                out.capture[name] = {}
             }
+            out.capture[name].tokens = [...(out.capture[name]?.tokens ?? []), out.match]
+            return out
         },
     }
 }
@@ -214,11 +316,40 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
     const matchers = _matchers.map(m => toMatcher(m))
     const matcher = group(...matchers)
     return {
+        ...matcher,
         type: "repeat",
         debug: `(${matchers.map(m => m.debug).join(" ")})*`,
         isPrepared: false,
         prepare() {
             prepareMatcher(matcher)
+        },
+        keywords: [],
+        lex(src) {
+            //matcher.lex().okがfalseになるまで繰り返す
+            //ignoreStringのスキップも忘れずに
+            const repOut: LexOutput = {
+                ok: true,
+                result: [],
+                index: 0,
+            }
+            function skipIgnoreS() {
+                const skipLen = skipIgnoreString(src)
+                repOut.index += skipLen
+                src = [...src].slice(skipLen).join("")
+            }
+            while (true) {
+                skipIgnoreS()
+                const mOut = matcher.lex(src)
+                if (mOut.ok) {
+                    repOut.result.push(...mOut.result)
+                    repOut.index += mOut.index
+                    src = [...src].slice(mOut.index).join("")
+                } else {
+                    break
+                }
+            }
+            skipIgnoreS()
+            return repOut
         },
         exec(input) {
             let cur = input.getCursor()
@@ -230,7 +361,7 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
                 tree: treeNode([]),
             }
             while (input.hasNext()) {
-                const out = matcher.exec(input)
+                const out = executeMatcher(matcher, input)
                 if (!out.isOk) {
                     input.setCursor(cur)
                     break
@@ -245,15 +376,29 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
 export const optional = (...args: ToMatcherArg[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
+        ...matcher,
         type: "optional",
         debug: `(${matcher.debug})?`,
         isPrepared: false,
         prepare() {
             prepareMatcher(matcher)
         },
+        keywords: [],
+        lex(src) {
+            const out = matcher.lex(src)
+            if (out.ok) {
+                return out
+            } else {
+                return {
+                    ok: true,
+                    result: [],
+                    index: 0,
+                }
+            }
+        },
         exec(input) {
             const optStartCur = input.getCursor()
-            const matcherOut = matcher.exec(input)
+            const matcherOut = executeMatcher(matcher, input)
             if (!matcherOut.isOk) {
                 input.setCursor(optStartCur)
                 return {
@@ -288,9 +433,9 @@ export const debug = (
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = matcher.exec(input)
-            if (hook) hook(input, ans)
-            return ans
+            const out = executeMatcher(matcher, input)
+            if (hook) hook(input, out)
+            return out
         },
     }
 }
@@ -309,9 +454,13 @@ export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => 
             prepareMatcher(preparedMatcher)
             preparedMatcher.debug = `debug(${preparedMatcher.debug})`
         },
+        keywords: [],
+        lex(src) {
+            return preparedMatcher!.lex(src)
+        },
         exec(input) {
-            if (!preparedMatcher) throw new Error(`define matcher is not prepared . prease call this matcher's prepare`)
-            let out = preparedMatcher!.exec(input)
+            if (!preparedMatcher) return throwMirabowError(e => e.matcher.define)
+            const out = executeMatcher(preparedMatcher, input)
             if (!out.isOk) {
                 return out
             }
@@ -331,6 +480,7 @@ export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => 
 export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
+        ...matcher,
         type: "scope",
         debug: `scope(${name}){ ${matcher.debug} }`,
         isPrepared: false,
@@ -338,11 +488,13 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = matcher.exec(input)
+            const out = executeMatcher(matcher, input)
+            const ans = { ...out }
             ans.capture = {
                 [name]: {
-                    ...ans.capture
-                } as Scope
+                    ...(ans.capture[name] ?? {}),
+                    scope: ans.capture,
+                }
             }
             return ans
         }
@@ -351,6 +503,7 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
 export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
+        ...matcher,
         type: "scope",
         debug: `arrayScope(${name}){ ${matcher.debug} }`,
         isPrepared: false,
@@ -358,10 +511,14 @@ export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher =
             prepareMatcher(matcher)
         },
         exec(input) {
-            const ans = matcher.exec(input)
+            const out = executeMatcher(matcher, input)
+            const ans = { ...out }
             ans.capture = {
-                [name]: [ans.capture]
-            } as Scope
+                [name]: {
+                    ...(ans.capture[name] ?? {}),
+                    arrayScope: [ans.capture],
+                }
+            }
             return ans
         },
     }
@@ -377,7 +534,7 @@ export const not = (matcher: Matcher): Matcher => {
             prepareMatcher(matcher)
         },
         exec(input) {
-            const out = matcher.exec(input)
+            const out = executeMatcher(matcher, input)
             return {
                 ...out,
                 isOk: !out.isOk,
@@ -391,6 +548,20 @@ export const anyKeyword = (): Matcher => {
         type: "someKeyword",
         debug: `someKeyword`,
         isPrepared: false,
+        keywords: [],
+        lex(src) {
+            const keywords = getIsKeywords()
+            const out = identifier().lex(src)
+            if (out.ok && out.result[0] && hitAnyIsKeywords(out.result[0])) {
+                return out
+            } else {
+                return {
+                    ok: false,
+                    index: 0,
+                    result: [],
+                }
+            }
+        },
         exec(input) {
             const inputToken = input.getNext()
             if (!inputToken) return emptyMatcherOutput()
@@ -411,3 +582,9 @@ export const anyKeyword = (): Matcher => {
         },
     }
 }
+
+//Matcher内で他のMatcherを実行する
+const executeMatcher = (matcher: Matcher, input: MatcherInput) => {
+    return matcher.exec(input)
+}
+
