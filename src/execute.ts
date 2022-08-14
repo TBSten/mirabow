@@ -1,3 +1,4 @@
+import { throwMirabowError } from "./error";
 import { tokennize } from "./tokennize";
 import { Hook, Matcher, ToMatcherArg } from "./types";
 import { execMatcher, prepareMatcher, toMatcher } from "./util";
@@ -13,7 +14,7 @@ let _currentExecutor: MatcherExecutor | null = null
 export const _setCurrentExecutor = (executor: MatcherExecutor) => _currentExecutor = executor
 export const _resetCurrentExecutor = () => _currentExecutor = null
 export const _getCurrentExecutor = () => {
-    if (_currentExecutor == null) throw new Error("can not find MatcherExecutor")
+    if (_currentExecutor == null) return throwMirabowError(e => e.executor.cannotFind)
     return _currentExecutor
 }
 

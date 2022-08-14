@@ -1,4 +1,5 @@
 import { getConfig, treeNode } from "./config";
+import { throwMirabowError } from "./error";
 import { esc } from "./helper/escape";
 import { isAscii } from "./helper/isAscii";
 import { skipIgnoreString } from "./lex/skip";
@@ -233,7 +234,7 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
     //tree
     if (getConfig().tree) {
         if (!(ans.tree instanceof Array)) {
-            throw new Error("MatcherOutput.tree must be Array")
+            return throwMirabowError(e => e.matcher.output.tree)
         }
         ans.tree = [...ans.tree, out.tree]
     }
@@ -458,7 +459,7 @@ export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => 
             return preparedMatcher!.lex(src)
         },
         exec(input) {
-            if (!preparedMatcher) throw new Error(`define matcher is not prepared . prease call this matcher's prepare`)
+            if (!preparedMatcher) return throwMirabowError(e => e.matcher.define)
             const out = executeMatcher(preparedMatcher, input)
             if (!out.isOk) {
                 return out

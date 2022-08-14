@@ -209,10 +209,6 @@ test("duplicate CaptureNode name", () => {
         )
     ])
     const out = execute(m, `a = b or c <> d and e = f`)
-    // if (!out.isOk) {
-    //     console.error(out);
-    //     throw new Error("invalid input")
-    // }
     expect(out.isOk)
         .toBe(true)
 })

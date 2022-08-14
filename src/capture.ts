@@ -1,3 +1,4 @@
+import { throwMirabowError } from "./error";
 import { Scope, Tokens } from "./types";
 
 export const getCapture = (capture: Scope, name: string) => {
@@ -13,7 +14,7 @@ export const getCaptureTokens = (capture: Scope, name: string, defaultTokens: To
         if (defaultTokens !== NONE) {
             return defaultTokens
         }
-        throw new Error(`capture ${name} must be tokens , but ${ans}`)
+        return throwMirabowError(e => e.matcher.output.capture.tokens(name, ans))
     }
     return ans
 }
@@ -23,7 +24,7 @@ export const getCaptureArrayScope = (capture: Scope, name: string, defaultScope:
         if (defaultScope !== NONE) {
             return defaultScope
         }
-        throw new Error(`capture ${name} must be arrayScope , but ${ans}`)
+        return throwMirabowError(e => e.matcher.output.capture.arrayScope(name, ans))
     }
     return ans
 }

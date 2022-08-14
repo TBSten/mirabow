@@ -1,4 +1,5 @@
 import { getConfig } from "./config";
+import { throwMirabowError } from "./error";
 import { esc } from "./helper/escape";
 import { Matcher, Tokens } from "./types";
 
@@ -35,12 +36,10 @@ export const tokennize = (source: string, matcher: Matcher): Tokens => {
     const sourceArr = [...source]
     const lexOut = matcher.lex(source)
     if (!lexOut.ok) {
-        // console.error(lexOut)
-        throw new Error(`failed tokennize . lex output:${JSON.stringify(lexOut)}`)
+        return throwMirabowError(e => e.tokennize.fail(lexOut))
     }
     if (lexOut.index < sourceArr.length) {
-        // console.error(lexOut)
-        throw new Error(`missing input . lexer could not read through the input . lex output:${JSON.stringify(lexOut)}`)
+        return throwMirabowError(e => e.tokennize.missing(lexOut))
     }
     return lexOut.result
 }
