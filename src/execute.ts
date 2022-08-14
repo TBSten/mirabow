@@ -33,15 +33,27 @@ export class MatcherExecutor {
         })
     }
     execute(src: string) {
-        _setCurrentExecutor(this)
-        prepareMatcher(this.matcher)
-        const tokens = tokennize(src)
-        const ans = {
-            ...execMatcher(this.matcher, tokens),
-            tokens,
+        try {
+            _setCurrentExecutor(this)
+            prepareMatcher(this.matcher)
+            const tokens = tokennize(src, this.matcher)
+            const ans = {
+                ...execMatcher(this.matcher, tokens),
+                tokens,
+            }
+            return ans
+        } catch (e) {
+            return {
+                isOk: false,
+                tokens: [],
+                capture: {},
+                match: [],
+                result: [],
+                tree: [],
+            }
+        } finally {
+            _resetCurrentExecutor()
         }
-        _resetCurrentExecutor()
-        return ans
     }
 }
 

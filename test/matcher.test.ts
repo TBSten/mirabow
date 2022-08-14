@@ -1,4 +1,8 @@
-import { any, arrayScope, cap, capture, def, execute, list, MatcherExecutor, opt, optional, or, repeat, Scope, scope, setConfig, token, toMatcher } from "../src"
+import { arrayScope, cap, capture, def, execute, identifier, list, MatcherExecutor, opt, optional, or, repeat, Scope, scope, setConfig, toMatcher } from "../src"
+
+setConfig({
+    ignoreString: /\s/
+})
 
 test("is", () => {
     const matcher = toMatcher("a")
@@ -7,22 +11,22 @@ test("is", () => {
         .toBe(true)
 })
 
-test("any", () => {
-    const matcher = toMatcher("x", any(), "z")
-    const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("xz").isOk)
-        .toBe(false)
-    expect(executor.execute("xxz").isOk)
-        .toBe(false)
-    expect(executor.execute("xyz").isOk)
-        .toBe(true)
-})
+// test("any", () => {
+//     const matcher = toMatcher("x", any(), "z")
+//     const executor = new MatcherExecutor(matcher)
+//     expect(executor.execute("xz").isOk)
+//         .toBe(false)
+//     expect(executor.execute("xxz").isOk)
+//         .toBe(false)
+//     expect(executor.execute("xyz").isOk)
+//         .toBe(true)
+// })
 
-test("token", () => {
-    const out = execute(["a", token(), "b"], `abb`)
-    expect(out.isOk)
-        .toBe(true)
-})
+// test("token", () => {
+//     const out = execute(["a", identifier(), "b"], `abb`)
+//     expect(out.isOk)
+//         .toBe(true)
+// })
 
 test("group", () => {
     const matcher = toMatcher("a", "b", "c")
@@ -41,16 +45,16 @@ test("or", () => {
 })
 
 test("capture", () => {
-    const matcher = toMatcher("a", capture("test"), "c")
+    const matcher = toMatcher("a", capture("test", "b"), "c")
     const executor = new MatcherExecutor(matcher)
-    const out = executor.execute("abc")
+    const out = executor.execute("a b c")
     expect(out.isOk)
         .toBe(true)
     expect(out.capture.test?.tokens)
         .toEqual([["b"]])
 })
 test("repeat", () => {
-    const matcher = toMatcher("a", repeat("b", token(), "d"), "e")
+    const matcher = toMatcher("a", repeat("b", or("c", "d"), "d"), "e")
     const executor = new MatcherExecutor(matcher)
     expect(executor.execute("abcdbdde").isOk)
         .toBe(true)
@@ -86,7 +90,7 @@ test("define-reference", () => {
     const a = def(() =>
         repeat(a_num, ",")
     )
-    const a_num = def(any())
+    const a_num = def(/[0-9]+/)
     const b = def(
         repeat("b")
     )
@@ -194,7 +198,7 @@ test("is matcher in def", () => {
     const out = execute(m1, "NMLNML")
 })
 test("duplicate CaptureNode name", () => {
-    const condition = def(() => [token(), or("=", "<>"), token()])
+    const condition = def(() => [identifier(), or("=", "<>"), identifier()])
     const m = def(() => [
         list(
             cap("or-conditions", arrayScope("or-conditions")(list(
@@ -205,8 +209,11 @@ test("duplicate CaptureNode name", () => {
         )
     ])
     const out = execute(m, `a = b or c <> d and e = f`)
-    if (!out.isOk) {
-        console.error(out);
-        throw new Error("invalid input")
-    }
+    // if (!out.isOk) {
+    //     console.error(out);
+    //     throw new Error("invalid input")
+    // }
+    expect(out.isOk)
+        .toBe(true)
 })
+

@@ -42,6 +42,6 @@
     "build:cjs": "tsc --p tsconfig.cjs.json",
     "build:esm": "tsc --p tsconfig.esm.json",
     "prepack": "npm run build",
-    "test": "jest"
+    "test": "jest --silent=false --verbose false"
   }
 }
