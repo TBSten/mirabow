@@ -1,4 +1,4 @@
-import { clearIsKeywords, def, execute, identifier, is, li, opt, or, prepareMatcher, re, repeat, setConfig, tokennize } from "../src"
+import { clearIsKeywords, def, execute, identifier, is, li, opt, or, prepareMatcher, re, repeat, setConfig, tokennize, toMatcher } from "../src"
 test("tokennize with string keywords", () => {
     const m = re(or("a", "b", "c"))
     prepareMatcher(m)
@@ -138,5 +138,13 @@ test("oreore tokennize", () => {
     let tokens = ["var", "x", "=", "10", ";", "var", "abc", "=", "edf",]
     expect(tokennize(program, oreore))
         .toEqual(tokens)
+})
+
+test("on fail tokennize", () => {
+    setConfig({ tree: true })
+    const matcher = toMatcher("create", "table", identifier())
+    const out = execute(matcher, "create table tbl1()")
+    expect(out.errors.length)
+        .toBe(1)
 })
 

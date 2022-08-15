@@ -1,6 +1,6 @@
 import { LexOutput } from "./types"
 
-
+export type MirabowErrorDetail = string | { detail: string, constructor: typeof MirabowError }
 export const errors = {
     executor: {
         cannotFind: "can not find MatcherExecutor",
@@ -22,12 +22,21 @@ export const errors = {
     notImplement: "not implement error . An unexpected error occurred",
 } as const
 
+type MirabowErrorType = "unknown" | "tokennize" | "execute"
 class MirabowError extends Error {
-    constructor(reason: string) {
+    type: MirabowErrorType
+    constructor(reason: string, type: MirabowErrorType = "execute") {
         super(reason)
+        this.type = type
     }
 }
 
-export const throwMirabowError = (reasonSelector: (e: typeof errors) => string): never => {
-    throw new MirabowError(reasonSelector(errors))
+export const throwMirabowError = (reasonSelector: (e: typeof errors) => MirabowErrorDetail): never => {
+    const detail = reasonSelector(errors)
+    if (typeof detail === "string") {
+        throw new MirabowError(detail)
+    } else {
+        throw new detail.constructor(detail.detail)
+    }
 }
+

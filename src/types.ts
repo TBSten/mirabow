@@ -77,8 +77,8 @@ export type DefinedMatcher = BaseMatcher & {
 }
 export type Matcher = BaseMatcher | DefinedMatcher
 export type Hook = (output: MatcherOutput | null) => unknown
-export type ToMatcherArgUnit = string | RegExp | Matcher | ToMatcherArgUnit[]
-export type ToMatcherArg = ToMatcherArgUnit | ToMatcherArgUnit[]
+export type MatcherLikeUnit = string | RegExp | Matcher | MatcherLikeUnit[]
+export type MatcherLike = MatcherLikeUnit | MatcherLikeUnit[]
 
 export type Config = {
     ignoreCase: boolean;

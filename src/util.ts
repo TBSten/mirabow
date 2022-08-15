@@ -1,8 +1,8 @@
 import { throwMirabowError } from "./error";
 import { group, is } from "./matcher";
-import { Matcher, Tokens, ToMatcherArg } from "./types";
+import { Matcher, MatcherLike, Tokens } from "./types";
 
-export const toMatcher = (...args: ToMatcherArg[]): Matcher => {
+export const toMatcher = (...args: MatcherLike[]): Matcher => {
     let ans;
     const first = args[0]
     if (args.length <= 0) {
@@ -26,7 +26,7 @@ export const prepareMatcher = (matcher: Matcher) => {
     matcher.prepare?.()
 }
 export const execMatcher = (
-    matcher: ToMatcherArg,
+    matcher: MatcherLike,
     data: Tokens,
 ) => {
     let cur = 0

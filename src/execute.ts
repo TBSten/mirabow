@@ -1,15 +1,8 @@
 import { throwMirabowError } from "./error";
 import { tokennize } from "./tokennize";
-import { ExecuteOutput, Hook, Matcher, ToMatcherArg } from "./types";
+import { ExecuteOutput, Hook, Matcher, MatcherLike, Tokens } from "./types";
 import { execMatcher, prepareMatcher, toMatcher } from "./util";
 
-// export const execute = (matcher: Matcher, src: string) => {
-//     const tokens = tokennize(src)
-//     return {
-//         ...execMatcher(matcher, tokens),
-//         tokens,
-//     }
-// }
 let _currentExecutor: MatcherExecutor | null = null
 export const _setCurrentExecutor = (executor: MatcherExecutor) => _currentExecutor = executor
 export const _resetCurrentExecutor = () => _currentExecutor = null
@@ -22,7 +15,7 @@ export const _getCurrentExecutor = () => {
 export class MatcherExecutor {
     matcher: Matcher
     _hooks: Record<string, Hook> = {}
-    constructor(...matcher: ToMatcherArg[]) {
+    constructor(...matcher: MatcherLike[]) {
         this.matcher = toMatcher(matcher)
     }
     addHook(hookName: string, hook: Hook) {
@@ -34,10 +27,11 @@ export class MatcherExecutor {
         })
     }
     execute(src: string): ExecuteOutput {
+        let tokens: Tokens | null = null;
         try {
             _setCurrentExecutor(this)
             prepareMatcher(this.matcher)
-            const tokens = tokennize(src, this.matcher)
+            tokens = tokennize(src, this.matcher)
             const ans = {
                 ...execMatcher(this.matcher, tokens),
                 tokens,
@@ -47,7 +41,7 @@ export class MatcherExecutor {
         } catch (e) {
             return {
                 isOk: false,
-                tokens: [],
+                tokens: tokens ? tokens : [],
                 capture: {},
                 match: [],
                 result: [],
@@ -61,7 +55,7 @@ export class MatcherExecutor {
 }
 
 export const execute = (
-    matcher: ToMatcherArg,
+    matcher: MatcherLike,
     src: string,
     option?: Partial<{ hooks: Record<string, Hook> }>,
 ) => {

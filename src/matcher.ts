@@ -4,7 +4,7 @@ import { esc } from "./helper/escape";
 import { isAscii } from "./helper/isAscii";
 import { skipIgnoreString } from "./lex/skip";
 import { addIsKeywords, getIsKeywords, hitAnyIsKeywords, hitIsKeyword } from "./tokennize";
-import { DefinedMatcher, LexOutput, Matcher, MatcherInput, MatcherOutput, ToMatcherArg } from "./types";
+import { DefinedMatcher, LexOutput, Matcher, MatcherInput, MatcherLike, MatcherOutput } from "./types";
 import { prepareMatcher, toMatcher } from "./util";
 
 export const emptyMatcherOutput = (): MatcherOutput => ({
@@ -83,16 +83,19 @@ export const identifier = (): Matcher => {
             let index = 0
             let buf = ""
             for (let char of [...src]) {
-                if (
-                    !ignore.exec(char) ||           //空白文字 または
-                    /[a-zA-Z0-9_$]/.test(char) ||   //識別子として有効なASCII文字 または
-                    !isAscii(char)                  //ASCII文字ではない
-                ) {
-                    buf += char
-                    index++
-                } else {
+                //異常系
+                //charは空白文字
+                if (ignore.exec(char)) {
                     break
                 }
+                //charは識別子として有効な文字ではない
+                if (!_isIdentifierChar(char)) {
+                    break
+                }
+                //正常系
+                //charは識別子として有効な文字
+                buf += char
+                index++
             }
             if (buf === "") {
                 return {
@@ -124,12 +127,21 @@ export const identifier = (): Matcher => {
         }
     }
 }
+function _isIdentifierChar(str: string) {
+    const strList = [...str]
+    if (strList.length !== 1) throwMirabowError(e => e.notImplement)
+    const char = strList[0]
+    return (
+        /[a-zA-Z0-9_$]/.test(char) ||
+        !isAscii(char)
+    )
+}
 // //キーワード以外の任意の1トークン
 // export const any = (): Matcher => {
 //     const matcher = debug("<any>", not(anyKeyword()))
 //     return matcher
 // }
-export const group = (..._matchers: ToMatcherArg[]): Matcher => {
+export const group = (..._matchers: MatcherLike[]): Matcher => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
@@ -242,7 +254,7 @@ function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
     ans.result.push(...out.result)
     return ans
 }
-export const or = (..._matchers: ToMatcherArg[]): Matcher => {
+export const or = (..._matchers: MatcherLike[]): Matcher => {
     const matchers = _matchers.map(matcher => {
         return toMatcher(matcher)
     })
@@ -288,7 +300,7 @@ export const or = (..._matchers: ToMatcherArg[]): Matcher => {
         }
     }
 }
-export const capture = (name: string, _matcher: ToMatcherArg = /.+/): Matcher => {
+export const capture = (name: string, _matcher: MatcherLike = /.+/): Matcher => {
     const matcher = toMatcher(_matcher)
     return {
         ...matcher,
@@ -312,7 +324,7 @@ export const capture = (name: string, _matcher: ToMatcherArg = /.+/): Matcher =>
         },
     }
 }
-export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
+export const repeat = (..._matchers: MatcherLike[]): Matcher => {
     const matchers = _matchers.map(m => toMatcher(m))
     const matcher = group(...matchers)
     return {
@@ -373,7 +385,7 @@ export const repeat = (..._matchers: ToMatcherArg[]): Matcher => {
         },
     }
 }
-export const optional = (...args: ToMatcherArg[]): Matcher => {
+export const optional = (...args: MatcherLike[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
         ...matcher,
@@ -413,7 +425,7 @@ export const optional = (...args: ToMatcherArg[]): Matcher => {
         },
     }
 }
-export const list = (args: ToMatcherArg[] | ToMatcherArg, joiner: ToMatcherArg = ","): Matcher => {
+export const list = (args: MatcherLike[] | MatcherLike, joiner: MatcherLike = ","): Matcher => {
     if (!(args instanceof Array)) args = [args]
     const matchers = toMatcher(...args)
     const joinMatcher = toMatcher(joiner)
@@ -422,7 +434,7 @@ export const list = (args: ToMatcherArg[] | ToMatcherArg, joiner: ToMatcherArg =
 }
 export const debug = (
     debug: string,
-    _matcher: ToMatcherArg,
+    _matcher: MatcherLike,
     hook?: (input: MatcherInput, output: MatcherOutput | null) => unknown,
 ): Matcher => {
     const matcher = toMatcher(_matcher)
@@ -439,7 +451,7 @@ export const debug = (
         },
     }
 }
-export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => {
+export const define = (..._matcher: [(() => MatcherLike)] | MatcherLike[]) => {
     let preparedMatcher: Matcher | null = null
     const definedMatcher: DefinedMatcher = {
         type: "define",
@@ -449,7 +461,7 @@ export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => 
             preparedMatcher = toMatcher(
                 _matcher[0] instanceof Function ?
                     _matcher[0]() :
-                    (_matcher as ToMatcherArg[])
+                    (_matcher as MatcherLike[])
             )
             prepareMatcher(preparedMatcher)
             preparedMatcher.debug = `debug(${preparedMatcher.debug})`
@@ -477,7 +489,7 @@ export const define = (..._matcher: [(() => ToMatcherArg)] | ToMatcherArg[]) => 
     }
     return definedMatcher
 }
-export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
+export const scope = (name: string,) => (...args: MatcherLike[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
         ...matcher,
@@ -500,7 +512,7 @@ export const scope = (name: string,) => (...args: ToMatcherArg[]): Matcher => {
         }
     }
 }
-export const arrayScope = (name: string) => (...args: ToMatcherArg[]): Matcher => {
+export const arrayScope = (name: string) => (...args: MatcherLike[]): Matcher => {
     const matcher = toMatcher(...args)
     return {
         ...matcher,
