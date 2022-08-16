@@ -1,15 +1,9 @@
 import { getConfig } from "../config";
 
 export function skipIgnoreString(src: string) {
-    const ignore = getConfig().ignoreString
-    let idx = 0
-    for (let char of [...src]) {
-        if (char.match(ignore)) {
-            idx++
-        } else {
-            break
-        }
-    }
-    return idx
+    const ignore = getConfig().ignoreString.source
+    const res = src.match(new RegExp(`^((${ignore})*)`))
+    const len = [...res?.[1] ?? ""].length
+    return len
 }
 

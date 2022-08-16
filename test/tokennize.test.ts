@@ -19,7 +19,6 @@ test("tokennize with regex keywords", () => {
 })
 test("json tokennize", () => {
     clearIsKeywords()
-    setConfig({ ignoreString: /\s/ })
     const json = def(() => or(obj, arr))
     const value = def(() => or(
         str, num, bool, obj, arr,
