@@ -1,7 +1,7 @@
 import { getConfig } from "../config";
 import { isAscii } from "../helper/string";
 import { Matcher } from "../type";
-import { notImplement, token } from "../util";
+import { notImplement } from "../util";
 
 export const identifier = <R>(): Matcher<"identifier", R> => {
     return {
@@ -12,10 +12,12 @@ export const identifier = <R>(): Matcher<"identifier", R> => {
             const text = input.text.slice(input.start)
             let end = input.start
             let buf = ""
+            console.log("id start", end);
+
             for (let char of [...text]) {
                 // charはidentifierとして不正な文字
                 if (
-                    ignore.exec(char) &&
+                    ignore.exec(char) ||
                     !_isIdentifierChar(char)
                 ) {
                     break
@@ -23,6 +25,8 @@ export const identifier = <R>(): Matcher<"identifier", R> => {
                 // charはidentifierとして有効な文字
                 buf += char
                 end++
+                console.log("id loop", buf, end);
+
             }
             if (buf === "") {
                 // console.error("identifier failed lex",);
@@ -35,7 +39,11 @@ export const identifier = <R>(): Matcher<"identifier", R> => {
             return {
                 ok: true,
                 tokens: [
-                    token(buf, input.start),
+                    {
+                        text: buf,
+                        start: input.start,
+                        end,
+                    }
                 ],
                 end,
             }
