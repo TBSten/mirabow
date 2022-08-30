@@ -1,7 +1,7 @@
 import { toMatcher } from "../toMatcher";
 import { Matcher, MatcherLike } from "../type";
 
-export const capture = (name: string, _matcher: MatcherLike): Matcher<"capture"> => {
+export const capture = <R>(name: string, _matcher: MatcherLike<R>): Matcher<"capture", R> => {
     const matcher = toMatcher(_matcher)
     return {
         ...matcher,

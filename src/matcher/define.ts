@@ -1,19 +1,19 @@
 import { toMatcher } from "../toMatcher";
 import { DefinedMatcher, Matcher, MatcherLike } from "../type";
 
-export const define = (
-    ..._matcher: [() => MatcherLike] | MatcherLike[]
-): DefinedMatcher => {
-    const childMatcher: Matcher<string> | null = null
+export const define = <R>(
+    ..._matcher: [() => MatcherLike<R>] | MatcherLike<R>[]
+): DefinedMatcher<R> => {
+    const childMatcher: Matcher<string, R> | null = null
     const getChildMatcher = () => {
         if (childMatcher) return childMatcher
         return toMatcher(
             _matcher[0] instanceof Function ?
                 _matcher[0]() :
-                (_matcher as MatcherLike)
+                (_matcher as MatcherLike<R>)
         )
     }
-    const definedMatcher: DefinedMatcher = {
+    const definedMatcher: DefinedMatcher<R> = {
         type: "define",
         debug: `<defined>`,
         hooks: [],

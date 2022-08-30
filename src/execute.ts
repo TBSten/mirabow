@@ -1,9 +1,9 @@
 import { notImplementTokenizeError } from "./error/tokenize";
-import { Matcher } from "./type";
+import { Matcher, MatcherOutput } from "./type";
 
-export class MatcherExecutor {
-    matcher: Matcher<string>
-    constructor(matcher: Matcher<string>) {
+export class MatcherExecutor<R> {
+    matcher: Matcher<string, R>
+    constructor(matcher: Matcher<string, R>) {
         this.matcher = matcher
     }
     lex(text: string) {
@@ -16,7 +16,7 @@ export class MatcherExecutor {
         }
         return ans.tokens
     }
-    execute(text: string) {
+    execute(text: string): MatcherOutput<R> {
         try {
             const tokens = this.lex(text)
             let index = 0
@@ -42,11 +42,12 @@ export class MatcherExecutor {
                 ok: false,
                 match: [],
                 capture: {},
+                result: null,
             }
         }
 
     }
 }
-export function execute(matcher: Matcher<string>, text: string) {
+export function execute<R>(matcher: Matcher<string, R>, text: string) {
     return new MatcherExecutor(matcher).execute(text)
 }

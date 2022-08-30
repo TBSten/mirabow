@@ -3,9 +3,9 @@ import { group } from "./matcher/group"
 import { is } from "./matcher/is"
 import { Matcher, MatcherLike } from "./type"
 
-export const toMatcher = (
-    ...matcherLikes: MatcherLike[]
-): Matcher<string> => {
+export const toMatcher = <R>(
+    ...matcherLikes: MatcherLike<R>[]
+): Matcher<string, R> => {
     if (matcherLikes.length === 1) {
         const like = matcherLikes[0]
         if (typeof like === "string" || like instanceof RegExp) {

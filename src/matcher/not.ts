@@ -1,7 +1,7 @@
 import { toMatcher } from "../toMatcher"
 import { Matcher, MatcherLike } from "../type"
 
-export const not = (_matcher: MatcherLike): Matcher<"not"> => {
+export const not = <R>(_matcher: MatcherLike<R>): Matcher<"not", R> => {
     const matcher = toMatcher(_matcher)
     return {
         ...matcher,

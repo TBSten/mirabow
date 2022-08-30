@@ -2,9 +2,9 @@ import { skipIgnoreString } from "../tokenize/skip";
 import { toMatcher } from "../toMatcher";
 import { LexerOutput, Matcher, MatcherLike, MatcherOutput } from "../type";
 
-export const group = (
-    ..._matchers: MatcherLike[]
-): Matcher<"group"> => {
+export const group = <R>(
+    ..._matchers: MatcherLike<R>[]
+): Matcher<"group", R> => {
     const matchers = _matchers.map(m => toMatcher(m))
     return {
         type: "group",
@@ -40,10 +40,11 @@ export const group = (
             return grpOut
         },
         exec(input) {
-            let ans: MatcherOutput = {
+            let ans: MatcherOutput<R> = {
                 ok: true,
                 capture: {},
                 match: [],
+                result: null,
             }
             for (const m of matchers) {
                 const out = m.exec(input)
@@ -57,12 +58,12 @@ export const group = (
         },
     }
 }
-export function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
+export function _updateGroupAns<R>(prev: MatcherOutput<R>, out: MatcherOutput<R>) {
     if (!prev.ok) {
         return out
     }
     //prevをoutで更新
-    let ans: MatcherOutput = {
+    let ans: MatcherOutput<R> = {
         ...prev,
     }
     //capture

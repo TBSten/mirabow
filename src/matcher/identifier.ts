@@ -3,7 +3,7 @@ import { isAscii } from "../helper/string";
 import { Matcher } from "../type";
 import { notImplement, token } from "../util";
 
-export const identifier = (): Matcher<"identifier"> => {
+export const identifier = <R>(): Matcher<"identifier", R> => {
     return {
         type: "identifier",
         debug: `<identifier>`,
@@ -47,6 +47,7 @@ export const identifier = (): Matcher<"identifier"> => {
                     ok: true,
                     capture: {},
                     match: [nextToken],
+                    result: null,
                 }
             }
             // console.error("identifier failed exec", "expect identifier", "recv", nextToken);
@@ -54,6 +55,7 @@ export const identifier = (): Matcher<"identifier"> => {
                 ok: false,
                 capture: {},
                 match: [],
+                result: null,
             }
         },
     }

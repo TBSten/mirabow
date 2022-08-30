@@ -3,9 +3,9 @@ import { toMatcher } from "../toMatcher"
 import { LexerOutput, Matcher, MatcherLike, MatcherOutput } from "../type"
 import { group, _updateGroupAns } from "./group"
 
-export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
+export const repeat = <R>(..._matchers: MatcherLike<R>[]): Matcher<"repeat", R> => {
     const matchers = _matchers.map(m => toMatcher(m))
-    const matcher = group(...matchers)
+    const matcher = group<R>(...matchers)
     return {
         ...matcher,
         type: "repeat",
@@ -38,10 +38,11 @@ export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
         },
         exec(input) {
             let idx = input.getIndex()
-            let ans: MatcherOutput = {
+            let ans: MatcherOutput<R> = {
                 ok: true,
                 capture: {},
                 match: [],
+                result: null,
             }
             while (input.hasNext()) {
                 const out = matcher.exec(input)
@@ -49,7 +50,7 @@ export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
                     input.setIndex(idx)
                     break
                 }
-                ans = _updateGroupAns(ans, out)
+                ans = _updateGroupAns<R>(ans, out)
                 idx = input.getIndex()
             }
             return ans
