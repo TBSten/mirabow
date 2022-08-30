@@ -1,18 +1,17 @@
-import { Config, TreeNode } from "./types";
+import { Config } from "./type"
 
-let _currentConfig: Config = {
+let _config: Config = {
     ignoreCase: false,
-    tree: false,
     ignoreString: /\s/,
 }
 
-export const setConfig = (config: Partial<Config>) => {
-    _currentConfig = {
-        ..._currentConfig,
-        ...config,
-    }
+export const getConfig = () => {
+    return _config
 }
 
-export const getConfig = () => _currentConfig
-
-export const treeNode = (node: TreeNode) => getConfig().tree ? node : null
+export const setConfig = (newConfig: Partial<Config>) => {
+    _config = {
+        ..._config,
+        ...newConfig,
+    }
+}

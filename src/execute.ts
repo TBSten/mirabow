@@ -1,67 +1,52 @@
-import { throwMirabowError } from "./error";
-import { tokennize } from "./tokennize";
-import { ExecuteOutput, Hook, Matcher, MatcherLike, Tokens } from "./types";
-import { execMatcher, prepareMatcher, toMatcher } from "./util";
-
-let _currentExecutor: MatcherExecutor | null = null
-export const _setCurrentExecutor = (executor: MatcherExecutor) => _currentExecutor = executor
-export const _resetCurrentExecutor = () => _currentExecutor = null
-export const _getCurrentExecutor = () => {
-    if (_currentExecutor == null) return throwMirabowError(e => e.executor.cannotFind)
-    return _currentExecutor
-}
-
+import { notImplementTokenizeError } from "./error/tokenize";
+import { Matcher } from "./type";
 
 export class MatcherExecutor {
-    matcher: Matcher
-    _hooks: Record<string, Hook> = {}
-    constructor(...matcher: MatcherLike[]) {
-        this.matcher = toMatcher(matcher)
+    matcher: Matcher<string>
+    constructor(matcher: Matcher<string>) {
+        this.matcher = matcher
     }
-    addHook(hookName: string, hook: Hook) {
-        this._hooks[hookName] = hook
-    }
-    addHooks(hooks: Record<string, Hook>) {
-        Object.entries(hooks).forEach(([hookName, hook]) => {
-            this.addHook(hookName, hook)
+    lex(text: string) {
+        const ans = this.matcher.lex({
+            start: 0,
+            text,
         })
+        if (!ans.ok) {
+            return notImplementTokenizeError(`${text} tokenize with ${this.matcher.debug} failed`)
+        }
+        return ans.tokens
     }
-    execute(src: string): ExecuteOutput {
-        let tokens: Tokens | null = null;
+    execute(text: string) {
         try {
-            _setCurrentExecutor(this)
-            prepareMatcher(this.matcher)
-            tokens = tokennize(src, this.matcher)
-            const ans = {
-                ...execMatcher(this.matcher, tokens),
-                tokens,
-                errors: [] as unknown[],
-            }
-            return ans
+            const tokens = this.lex(text)
+            let index = 0
+            const execOut = this.matcher.exec({
+                getIndex() {
+                    return index
+                },
+                hasNext() {
+                    return index < tokens.length
+                },
+                setIndex(idx) {
+                    index = idx
+                },
+                getNextToken() {
+                    const ans = tokens[index]
+                    index++
+                    return ans
+                },
+            })
+            return execOut
         } catch (e) {
             return {
-                isOk: false,
-                tokens: tokens ? tokens : [],
-                capture: {},
+                ok: false,
                 match: [],
-                result: [],
-                tree: [],
-                errors: [e],
+                capture: {},
             }
-        } finally {
-            _resetCurrentExecutor()
         }
+
     }
 }
-
-export const execute = (
-    matcher: MatcherLike,
-    src: string,
-    option?: Partial<{ hooks: Record<string, Hook> }>,
-) => {
-    const hooks = option?.hooks ?? {}
-    const executor = new MatcherExecutor(matcher)
-    executor.addHooks(hooks)
-    const result = executor.execute(src)
-    return result
+export function execute(matcher: Matcher<string>, text: string) {
+    return new MatcherExecutor(matcher).execute(text)
 }

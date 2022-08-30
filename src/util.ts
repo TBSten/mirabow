@@ -1,50 +1,13 @@
-import { throwMirabowError } from "./error";
-import { group, is } from "./matcher";
-import { Matcher, MatcherLike, Tokens } from "./types";
+import { } from "./matcher/is"
+import { Token } from "./type"
 
-export const toMatcher = (...args: MatcherLike[]): Matcher => {
-    let ans;
-    const first = args[0]
-    if (args.length <= 0) {
-        return throwMirabowError(e => e.notImplement)
-    } else if (args.length === 1) {
-        if (typeof first === "string" || first instanceof RegExp) {
-            ans = is(first)
-        } else if (first instanceof Array) {
-            ans = group(...first.map(a => toMatcher(a)))
-        } else {
-            ans = first
-        }
-    } else {
-        ans = group(...args.map(a => toMatcher(a)))
+export const token = (text: string, start = 0): Token => {
+    return {
+        text,
+        start,
+        end: start,
     }
-    return ans
 }
-export const prepareMatcher = (matcher: Matcher) => {
-    if (matcher.isPrepared) return
-    matcher.isPrepared = true
-    matcher.prepare?.()
-}
-export const execMatcher = (
-    matcher: MatcherLike,
-    data: Tokens,
-) => {
-    let cur = 0
-    const ans = toMatcher(matcher).exec({
-        getCursor() {
-            return cur
-        },
-        setCursor(cursor: number) {
-            cur = cursor
-        },
-        getNext() {
-            const ans = data[cur]
-            cur++
-            return ans ?? null
-        },
-        hasNext() {
-            return cur < data.length
-        },
-    })
-    return ans
+export const notImplement = (msg = "something invalid"): never => {
+    throw new Error(msg)
 }

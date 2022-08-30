@@ -1,46 +1,41 @@
-import { arrayScope, cap, capture, def, execute, identifier, list, MatcherExecutor, opt, optional, or, repeat, Scope, scope, setConfig, toMatcher } from "../src"
+import { arrayScope, cap, capture, CaptureScope, def, execute, identifier, list, MatcherExecutor, optional, or, repeat, scope, setConfig, toMatcher } from "../src"
 
-setConfig({
-    ignoreString: /\s/
+beforeEach(() => {
+    setConfig({
+        ignoreCase: true,
+        ignoreString: /\s/
+    })
 })
+
 
 test("is", () => {
     const matcher = toMatcher("a")
-    const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("a").isOk)
+    let res = execute(matcher, "a")
+    expect(res.ok)
         .toBe(true)
+    expect(res.match)
+        .toEqual([{ text: "a", start: 0, end: 1 }])
+    res = execute(matcher, "A")
+    expect(res.ok)
+        .toBe(true)
+    expect(res.match)
+        .toEqual([{ text: "A", start: 0, end: 1 }])
 })
-
-// test("any", () => {
-//     const matcher = toMatcher("x", any(), "z")
-//     const executor = new MatcherExecutor(matcher)
-//     expect(executor.execute("xz").isOk)
-//         .toBe(false)
-//     expect(executor.execute("xxz").isOk)
-//         .toBe(false)
-//     expect(executor.execute("xyz").isOk)
-//         .toBe(true)
-// })
-
-// test("token", () => {
-//     const out = execute(["a", identifier(), "b"], `abb`)
-//     expect(out.isOk)
-//         .toBe(true)
-// })
 
 test("group", () => {
     const matcher = toMatcher("a", "b", "c")
     const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("abc").isOk)
+    expect(executor.execute("abc").ok)
         .toBe(true)
 })
 
 test("or", () => {
+    setConfig({ ignoreCase: true })
     const matcher = toMatcher("a", or("b", "B"), "c")
     const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("abc").isOk)
+    expect(executor.execute("abc").ok)
         .toBe(true)
-    expect(executor.execute("aBc").isOk)
+    expect(executor.execute("aBc").ok)
         .toBe(true)
 })
 
@@ -48,39 +43,39 @@ test("capture", () => {
     const matcher = toMatcher("a", capture("test", "b"), "c")
     const executor = new MatcherExecutor(matcher)
     const out = executor.execute("a b c")
-    expect(out.isOk)
+    expect(out.ok)
         .toBe(true)
     expect(out.capture.test?.tokens)
-        .toEqual([["b"]])
+        .toEqual([[{ text: "b", start: 2, end: 3, }]])
 })
 test("repeat", () => {
     const matcher = toMatcher("a", repeat("b", or("c", "d"), "d"), "e")
     const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("abcdbdde").isOk)
+    expect(executor.execute("abcdbdde").ok)
         .toBe(true)
-    expect(executor.execute("abcdbde").isOk)
+    expect(executor.execute("abcdbde").ok)
         .toBe(false)
 })
 
 test("optional", () => {
     const matcher = toMatcher("a", optional("b", "c"), "d")
     const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("ad").isOk)
+    expect(executor.execute("ad").ok)
         .toBe(true)
-    expect(executor.execute("abcd").isOk)
+    expect(executor.execute("abcd").ok)
         .toBe(true)
-    expect(executor.execute("abd").isOk)
+    expect(executor.execute("abd").ok)
         .toBe(false)
-    expect(executor.execute("acd").isOk)
+    expect(executor.execute("acd").ok)
         .toBe(false)
 })
 
 test("list", () => {
     const matcher = toMatcher("(", list(or("a", "b", "c"), "-"), ")")
     const executor = new MatcherExecutor(matcher)
-    expect(executor.execute("(a-b-c)").isOk)
+    expect(executor.execute("(a-b-c)").ok)
         .toBe(true)
-    expect(executor.execute("(a-b-c-)").isOk)
+    expect(executor.execute("(a-b-c-)").ok)
         .toBe(false)
 })
 test("define-reference", () => {
@@ -94,39 +89,39 @@ test("define-reference", () => {
     const b = def(
         repeat("b")
     )
-    a_num.hook = (out) => {
-        return [parseFloat(out.match[0])]
-    }
-    a.hook = (out) => {
-        return out.result.map(res => parseInt(res as string))
-    }
-    matcher.hook = (out) => {
-        return [out.result.reduce<number>((ans, value) => ans + (value as number), 0)]
-    }
+    // a_num.hook = (out) => {
+    //     return [parseFloat(out.match[0])]
+    // }
+    // a.hook = (out) => {
+    //     return out.result.map(res => parseInt(res as string))
+    // }
+    // matcher.hook = (out) => {
+    //     return [out.result.reduce<number>((ans, value) => ans + (value as number), 0)]
+    // }
     const out = execute(matcher, "1,2,3,SUM")
-    expect(out.isOk)
+    expect(out.ok)
         .toBe(true)
-    expect(out.result[0])
-        .toBe(6)
+    // expect(out.result[0])
+    //     .toBe(6)
 })
 
-test("tree", () => {
-    setConfig({ tree: true })
-    const idA = def(() => "a")
-    const idRep = def(() => repeat(idGrp, "d"))
-    const idGrp = def(() => ["b", "c"])
-    const executor = new MatcherExecutor(opt(idA), idRep, "e")
-    executor.addHook("id-a", (out) => {
-        console.log("id-a hook",);
-    })
-    const out = executor.execute("bcdbcde")
-    expect(out.isOk)
-        .toBe(true)
-    expect(out.tree)
-        .toEqual(
-            [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
-        )
-})
+// test("tree", () => {
+//     setConfig({ tree: true })
+//     const idA = def(() => "a")
+//     const idRep = def(() => repeat(idGrp, "d"))
+//     const idGrp = def(() => ["b", "c"])
+//     const executor = new MatcherExecutor(opt(idA), idRep, "e")
+//     executor.addHook("id-a", (out) => {
+//         console.log("id-a hook",);
+//     })
+//     const out = executor.execute("bcdbcde")
+//     expect(out.ok)
+//         .toBe(true)
+//     expect(out.tree)
+//         .toEqual(
+//             [null, [[["b", "c"], "d"], [["b", "c"], "d"]], "e"]
+//         )
+// })
 test("capture-scope", () => {
     const matcher = toMatcher(
         capture("cap-1", "a"),
@@ -141,22 +136,23 @@ test("capture-scope", () => {
         capture("cap-6", "f"),
     )
     const out = new MatcherExecutor(matcher).execute("abcdef")
+    expect(out.ok).toBe(true)
     expect(out.capture)
-        .toEqual<Scope>({
-            "cap-1": { tokens: [["a"]] },
+        .toEqual<CaptureScope>({
+            "cap-1": { tokens: [[{ text: "a", start: 0, end: 1 }]] },
             "scope-1": {
                 scope: {
-                    "cap-2": { tokens: [["b"]] },
+                    "cap-2": { tokens: [[{ text: "b", start: 1, end: 2, }]] },
                     "scope-2": {
                         scope: {
-                            "cap-3": { tokens: [["c"]] },
-                            "cap-4": { tokens: [["d"]] }
+                            "cap-3": { tokens: [[{ text: "c", start: 2, end: 3, }]] },
+                            "cap-4": { tokens: [[{ text: "d", start: 3, end: 4, }]] }
                         }
                     },
-                    "cap-5": { tokens: [["e"]] }
+                    "cap-5": { tokens: [[{ text: "e", start: 4, end: 5, }]] }
                 },
             },
-            "cap-6": { tokens: [["f"]] },
+            "cap-6": { tokens: [[{ text: "f", start: 5, end: 6, }]] },
         })
 })
 test("capture-scope-in-group", () => {
@@ -175,14 +171,24 @@ test("capture-scope-in-group", () => {
             "ab-list": {
                 arrayScope: [
                     {
-                        "cap-ab": { tokens: [["b"], ["a"]] },
+                        "cap-ab": {
+                            tokens: [
+                                [{ text: "b", start: 1, end: 2 }],
+                                [{ text: "a", start: 2, end: 3 }],
+                            ]
+                        },
                     },
                     {
-                        "cap-ab": { tokens: [["a"], ["a"]] },
+                        "cap-ab": {
+                            tokens: [
+                                [{ text: "a", start: 5, end: 6 }],
+                                [{ text: "a", start: 6, end: 7 }],
+                            ]
+                        },
                     },
                 ]
             },
-        }))
+        } as CaptureScope))
 })
 
 test("not", () => { })
@@ -209,7 +215,7 @@ test("duplicate CaptureNode name", () => {
         )
     ])
     const out = execute(m, `a = b or c <> d and e = f`)
-    expect(out.isOk)
+    expect(out.ok)
         .toBe(true)
 })
 
