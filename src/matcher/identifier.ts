@@ -12,7 +12,6 @@ export const identifier = <R>(): Matcher<"identifier", R> => {
             const text = input.text.slice(input.start)
             let end = input.start
             let buf = ""
-            console.log("id start", end);
 
             for (let char of [...text]) {
                 // charはidentifierとして不正な文字
@@ -25,7 +24,6 @@ export const identifier = <R>(): Matcher<"identifier", R> => {
                 // charはidentifierとして有効な文字
                 buf += char
                 end++
-                console.log("id loop", buf, end);
 
             }
             if (buf === "") {
