@@ -3,9 +3,9 @@ import { perfectMatch, startWith } from "../helper/regex";
 import { esc, len } from '../helper/string';
 import { Matcher, Token } from "../type";
 
-export const is = <R>(
+export const is = (
     pattern: string | RegExp,
-): Matcher<"is", R> => {
+): Matcher<"is"> => {
     const patternRegex = () => {
         const regex = typeof pattern === "string" ?
             new RegExp(esc(pattern), getConfig().ignoreCase ? "i" : "") :

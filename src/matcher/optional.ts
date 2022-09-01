@@ -1,7 +1,7 @@
 import { toMatcher } from "../toMatcher"
 import { Matcher, MatcherLike } from "../type"
 
-export const optional = <R>(...args: MatcherLike<R>[]): Matcher<"optional", R> => {
+export const optional = (...args: MatcherLike[]): Matcher<"optional"> => {
     const matcher = toMatcher(...args)
     return {
         ...matcher,

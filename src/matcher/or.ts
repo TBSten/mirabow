@@ -1,9 +1,9 @@
 import { toMatcher } from "../toMatcher";
 import { Matcher, MatcherLike } from "../type";
 
-export const or = <R>(
-    ..._matchers: MatcherLike<R>[]
-): Matcher<"or", R> => {
+export const or = (
+    ..._matchers: MatcherLike[]
+): Matcher<"or"> => {
     const matchers = _matchers.map(m => toMatcher(m))
     return {
         type: "or",

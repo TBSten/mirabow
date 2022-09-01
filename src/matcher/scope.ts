@@ -1,7 +1,7 @@
 import { toMatcher } from "../toMatcher";
 import { Matcher, MatcherLike } from "../type";
 
-export const scope = <R>(name: string) => (...args: MatcherLike<R>[]): Matcher<"scope", R> => {
+export const scope = (name: string) => (...args: MatcherLike[]): Matcher<"scope"> => {
     const matcher = toMatcher(...args)
     return {
         ...matcher,

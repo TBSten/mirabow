@@ -22,24 +22,25 @@ export type MatcherInput = {
     setIndex(idx: number): void
     hasNext(): boolean
 }
-export type MatcherOutput<R> = {
+export declare type ResultType = unknown
+export type MatcherOutput = {
     ok: boolean
     match: Token[]
     capture: CaptureScope
-    result: R | null
+    result: ResultType | null
 }
-export type BasicMatcher<T extends string, R = null> = {
+export type BasicMatcher<T extends string> = {
     type: T
     debug: string
     lex: Lexer
-    exec(input: MatcherInput): MatcherOutput<R>
+    exec(input: MatcherInput): MatcherOutput
 }
-export type DefinedMatcher<R> = BasicMatcher<"define", R> & {
+export type DefinedMatcher = BasicMatcher<"define"> & {
     hooks: Hook[]
 }
-export type Matcher<T extends string, R> = BasicMatcher<T, R> | DefinedMatcher<R>
-export type MatcherLikeUnit<R> = string | RegExp | Matcher<string, R>
-export type MatcherLike<R> = MatcherLikeUnit<R> | MatcherLikeUnit<R>[]
+export type Matcher<T extends string> = BasicMatcher<T> | DefinedMatcher
+export type MatcherLikeUnit = string | RegExp | Matcher<string>
+export type MatcherLike = MatcherLikeUnit | MatcherLikeUnit[]
 
 export type CaptureScope = {
     [key: string]: CaptureNode | undefined
@@ -49,7 +50,7 @@ export type CaptureNode = {
     scope?: CaptureScope
     arrayScope?: CaptureScope[]
 }
-export type Hook = <R>(out: MatcherOutput<R>) => void
+export type Hook = (out: MatcherOutput) => void
 
 
 export type Config = {

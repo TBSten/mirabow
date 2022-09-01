@@ -3,7 +3,7 @@ import { isAscii } from "../helper/string";
 import { Matcher } from "../type";
 import { notImplement } from "../util";
 
-export const identifier = <R>(): Matcher<"identifier", R> => {
+export const identifier = (): Matcher<"identifier"> => {
     return {
         type: "identifier",
         debug: `<identifier>`,

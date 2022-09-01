@@ -3,7 +3,7 @@ import { Matcher, MatcherLike } from "../type"
 import { group } from "./group"
 import { repeat } from "./repeat"
 
-export const list = <R>(args: MatcherLike<R>[] | MatcherLike<R>, joiner: MatcherLike<R> = ","): Matcher<string, R> => {
+export const list = (args: MatcherLike[] | MatcherLike, joiner: MatcherLike = ","): Matcher<string> => {
     if (!(args instanceof Array)) args = [args]
     const matchers = toMatcher(...args)
     const joinMatcher = toMatcher(joiner)
