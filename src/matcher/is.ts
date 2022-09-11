@@ -2,6 +2,7 @@ import { getConfig } from '../config';
 import { perfectMatch, startWith } from "../helper/regex";
 import { esc, len } from '../helper/string';
 import { Matcher, Token } from "../type";
+import { tokens } from '../util';
 
 export const is = (
     pattern: string | RegExp,
@@ -34,9 +35,9 @@ export const is = (
                 return {
                     ok: true,
                     end,
-                    tokens: [
+                    tokens: tokens(input.raw, [
                         token
-                    ],
+                    ]),
                 }
             }
             // console.error(
@@ -46,7 +47,7 @@ export const is = (
             // )
             return {
                 ok: false,
-                tokens: [],
+                tokens: tokens(input.raw, []),
                 end: input.start,
             }
         },
@@ -57,15 +58,15 @@ export const is = (
                 return {
                     ok: true,
                     capture: {},
-                    match: [nextToken],
-                    result: null,
+                    match: tokens(input.getRaw(), [nextToken]),
+                    raw: input.getRaw(),
                 }
             }
             return {
                 ok: false,
                 capture: {},
-                match: [],
-                result: null,
+                match: tokens(input.getRaw(), []),
+                raw: input.getRaw(),
             }
         },
     }

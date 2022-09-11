@@ -1,6 +1,7 @@
 import { skipIgnoreString } from "../tokenize/skip"
 import { toMatcher } from "../toMatcher"
 import { LexerOutput, Matcher, MatcherLike, MatcherOutput } from "../type"
+import { joinTokens, tokens } from "../util"
 import { group, _updateGroupAns } from "./group"
 
 export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
@@ -13,7 +14,7 @@ export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
         lex(input) {
             const repOut: LexerOutput = {
                 ok: true,
-                tokens: [],
+                tokens: tokens(input.raw, []),
                 end: 0,
             }
             function skipIgnoreS() {
@@ -29,7 +30,8 @@ export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
                     input.start = repOut.end
                     break
                 }
-                repOut.tokens.push(...mOut.tokens)
+                // repOut.tokens.push(...mOut.tokens)
+                repOut.tokens = joinTokens(input.raw, repOut.tokens, mOut.tokens)
                 repOut.end = mOut.end
                 idx = mOut.end
             }
@@ -41,8 +43,8 @@ export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
             let ans: MatcherOutput = {
                 ok: true,
                 capture: {},
-                match: [],
-                result: null,
+                match: tokens(input.getRaw(), []),
+                raw: input.getRaw(),
             }
             while (input.hasNext()) {
                 const out = matcher.exec(input)

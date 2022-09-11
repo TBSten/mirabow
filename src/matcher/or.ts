@@ -1,5 +1,6 @@
 import { toMatcher } from "../toMatcher";
 import { Matcher, MatcherLike } from "../type";
+import { tokens } from "../util";
 
 export const or = (
     ..._matchers: MatcherLike[]
@@ -17,7 +18,7 @@ export const or = (
             }
             return {
                 ok: false,
-                tokens: [],
+                tokens: tokens(input.raw, []),
                 end: input.start,
             }
         },
@@ -33,15 +34,14 @@ export const or = (
                     ...out,
                     ok: true,
                     capture: { ...out.capture },
-                    match: [...out.match],
-                    result: null,
+                    match: out.match,
                 }
             }
             return {
                 ok: false,
-                match: [],
+                match: tokens(input.getRaw(), []),
                 capture: {},
-                result: null,
+                raw: input.getRaw(),
             }
         }
     }

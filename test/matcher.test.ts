@@ -1,4 +1,5 @@
 import { arrayScope, cap, capture, CaptureScope, def, execute, identifier, list, MatcherExecutor, optional, or, repeat, scope, setConfig, toMatcher } from "../src"
+import { testTokens } from "./util"
 
 beforeEach(() => {
     setConfig({
@@ -9,17 +10,18 @@ beforeEach(() => {
 
 
 test("is", () => {
+    const text = "a"
     const matcher = toMatcher("a")
-    let res = execute(matcher, "a")
+    let res = execute(matcher, text)
     expect(res.ok)
         .toBe(true)
     expect(res.match)
-        .toEqual([{ text: "a", start: 0, end: 1 }])
+        .toEqual(testTokens(text, [{ text: "a", start: 0, end: 1 }]))
     res = execute(matcher, "A")
     expect(res.ok)
         .toBe(true)
     expect(res.match)
-        .toEqual([{ text: "A", start: 0, end: 1 }])
+        .toEqual(testTokens(text, [{ text: "A", start: 0, end: 1 }]))
 })
 
 test("group", () => {
@@ -40,13 +42,14 @@ test("or", () => {
 })
 
 test("capture", () => {
+    const text = "a b c"
     const matcher = toMatcher("a", capture("test", "b"), "c")
     const executor = new MatcherExecutor(matcher)
-    const out = executor.execute("a b c")
+    const out = executor.execute(text)
     expect(out.ok)
         .toBe(true)
     expect(out.capture.test?.tokens)
-        .toEqual([[{ text: "b", start: 2, end: 3, }]])
+        .toEqual([testTokens(text, [{ text: "b", start: 2, end: 3, }])])
 })
 test("repeat", () => {
     const matcher = toMatcher("a", repeat("b", or("c", "d"), "d"), "e")
@@ -123,6 +126,7 @@ test("define-reference", () => {
 //         )
 // })
 test("capture-scope", () => {
+    const text = "abcdef"
     const matcher = toMatcher(
         capture("cap-1", "a"),
         scope("scope-1")(
@@ -135,27 +139,28 @@ test("capture-scope", () => {
         ),
         capture("cap-6", "f"),
     )
-    const out = new MatcherExecutor(matcher).execute("abcdef")
+    const out = new MatcherExecutor(matcher).execute(text)
     expect(out.ok).toBe(true)
     expect(out.capture)
         .toEqual<CaptureScope>({
-            "cap-1": { tokens: [[{ text: "a", start: 0, end: 1 }]] },
+            "cap-1": { tokens: [testTokens(text, [{ text: "a", start: 0, end: 1 }])] },
             "scope-1": {
                 scope: {
-                    "cap-2": { tokens: [[{ text: "b", start: 1, end: 2, }]] },
+                    "cap-2": { tokens: [testTokens(text, [{ text: "b", start: 1, end: 2, }])] },
                     "scope-2": {
                         scope: {
-                            "cap-3": { tokens: [[{ text: "c", start: 2, end: 3, }]] },
-                            "cap-4": { tokens: [[{ text: "d", start: 3, end: 4, }]] }
+                            "cap-3": { tokens: [testTokens(text, [{ text: "c", start: 2, end: 3, }])] },
+                            "cap-4": { tokens: [testTokens(text, [{ text: "d", start: 3, end: 4, }])] }
                         }
                     },
-                    "cap-5": { tokens: [[{ text: "e", start: 4, end: 5, }]] }
+                    "cap-5": { tokens: [testTokens(text, [{ text: "e", start: 4, end: 5, }])] }
                 },
             },
-            "cap-6": { tokens: [[{ text: "f", start: 5, end: 6, }]] },
+            "cap-6": { tokens: [testTokens(text, [{ text: "f", start: 5, end: 6, }])] },
         })
 })
 test("capture-scope-in-group", () => {
+    const text = "(ba)(aa)"
     const matcher = repeat(
         "(",
         arrayScope("ab-list")(repeat([
@@ -165,7 +170,7 @@ test("capture-scope-in-group", () => {
         ),
         ")",
     )
-    const out = execute(matcher, "(ba)(aa)")
+    const out = execute(matcher, text)
     expect(out.capture)
         .toEqual(expect.objectContaining({
             "ab-list": {
@@ -173,16 +178,16 @@ test("capture-scope-in-group", () => {
                     {
                         "cap-ab": {
                             tokens: [
-                                [{ text: "b", start: 1, end: 2 }],
-                                [{ text: "a", start: 2, end: 3 }],
+                                testTokens(text, [{ text: "b", start: 1, end: 2 }]),
+                                testTokens(text, [{ text: "a", start: 2, end: 3 }]),
                             ]
                         },
                     },
                     {
                         "cap-ab": {
                             tokens: [
-                                [{ text: "a", start: 5, end: 6 }],
-                                [{ text: "a", start: 6, end: 7 }],
+                                testTokens(text, [{ text: "a", start: 5, end: 6 }]),
+                                testTokens(text, [{ text: "a", start: 6, end: 7 }]),
                             ]
                         },
                     },

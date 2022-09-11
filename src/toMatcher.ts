@@ -1,11 +1,11 @@
 
 import { group } from "./matcher/group"
 import { is } from "./matcher/is"
-import { Matcher, MatcherLike } from "./type"
+import { MatcherLike, SomeMatcher } from "./type"
 
 export const toMatcher = (
     ...matcherLikes: MatcherLike[]
-): Matcher<string> => {
+): SomeMatcher => {
     if (matcherLikes.length === 1) {
         const like = matcherLikes[0]
         if (typeof like === "string" || like instanceof RegExp) {

@@ -1,15 +1,17 @@
 import { notImplementTokenizeError } from "./error/tokenize";
-import { Matcher, MatcherOutput } from "./type";
+import { MatcherOutput, SomeMatcher } from "./type";
+import { tokens } from "./util";
 
 export class MatcherExecutor {
-    matcher: Matcher<string>
-    constructor(matcher: Matcher<string>) {
+    matcher: SomeMatcher
+    constructor(matcher: SomeMatcher) {
         this.matcher = matcher
     }
     lex(text: string) {
         const ans = this.matcher.lex({
             start: 0,
             text,
+            raw: text,
         })
         if (!ans.ok) {
             return notImplementTokenizeError(`${text} tokenize with ${this.matcher.debug} failed`)
@@ -21,17 +23,20 @@ export class MatcherExecutor {
             const tokens = this.lex(text)
             let index = 0
             const execOut = this.matcher.exec({
+                getRaw() {
+                    return text
+                },
                 getIndex() {
                     return index
                 },
                 hasNext() {
-                    return index < tokens.length
+                    return index < tokens.base.length
                 },
                 setIndex(idx) {
                     index = idx
                 },
                 getNextToken() {
-                    const ans = tokens[index]
+                    const ans = tokens.base[index]
                     index++
                     return ans
                 },
@@ -39,15 +44,15 @@ export class MatcherExecutor {
             return execOut
         } catch (e) {
             return {
+                raw: text,
                 ok: false,
-                match: [],
+                match: tokens(text, []),
                 capture: {},
-                result: null,
             }
         }
 
     }
 }
-export function execute(matcher: Matcher<string>, text: string) {
+export function execute(matcher: SomeMatcher, text: string) {
     return new MatcherExecutor(matcher).execute(text)
 }

@@ -1,10 +1,10 @@
 import { toMatcher } from "../toMatcher";
-import { DefinedMatcher, Matcher, MatcherLike } from "../type";
+import { DefinedMatcher, MatcherLike, SomeMatcher } from "../type";
 
 export const define = (
     ..._matcher: [() => MatcherLike] | MatcherLike[]
 ): DefinedMatcher => {
-    const childMatcher: Matcher<string> | null = null
+    const childMatcher: SomeMatcher | null = null
     const getChildMatcher = () => {
         if (childMatcher) return childMatcher
         return toMatcher(

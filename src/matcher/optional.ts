@@ -1,5 +1,6 @@
 import { toMatcher } from "../toMatcher"
 import { Matcher, MatcherLike } from "../type"
+import { tokens } from "../util"
 
 export const optional = (...args: MatcherLike[]): Matcher<"optional"> => {
     const matcher = toMatcher(...args)
@@ -16,7 +17,7 @@ export const optional = (...args: MatcherLike[]): Matcher<"optional"> => {
                 input.start = start
                 return {
                     ok: true,
-                    tokens: [],
+                    tokens: tokens(input.raw, []),
                     end: input.start,
                 }
             }
@@ -29,8 +30,8 @@ export const optional = (...args: MatcherLike[]): Matcher<"optional"> => {
                 return {
                     ok: true,
                     capture: {},
-                    match: [],
-                    result: null,
+                    match: tokens(input.getRaw(), []),
+                    raw: input.getRaw(),
                 }
             }
             return matcherOut

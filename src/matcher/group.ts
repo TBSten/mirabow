@@ -1,6 +1,7 @@
 import { skipIgnoreString } from "../tokenize/skip";
 import { toMatcher } from "../toMatcher";
 import { LexerOutput, Matcher, MatcherLike, MatcherOutput } from "../type";
+import { joinTokens, tokens } from "../util";
 
 export const group = (
     ..._matchers: MatcherLike[]
@@ -12,7 +13,7 @@ export const group = (
         lex(input) {
             const grpOut: LexerOutput = {
                 ok: true,
-                tokens: [],
+                tokens: tokens(input.raw, []),
                 end: input.start,
             }
             function skipIgnoreS() {
@@ -27,7 +28,8 @@ export const group = (
                     start: grpOut.end,
                 })
                 if (mOut.ok) {
-                    grpOut.tokens.push(...mOut.tokens)
+                    // grpOut.tokens.push(...mOut.tokens)
+                    grpOut.tokens = joinTokens(input.raw, grpOut.tokens, mOut.tokens)
                     grpOut.end = mOut.end
                     input.start = mOut.end
                 } else {
@@ -41,10 +43,10 @@ export const group = (
         },
         exec(input) {
             let ans: MatcherOutput = {
+                raw: input.getRaw(),
                 ok: true,
                 capture: {},
-                match: [],
-                result: null,
+                match: tokens(input.getRaw(), []),
             }
             for (const m of matchers) {
                 const out = m.exec(input)
@@ -97,6 +99,7 @@ export function _updateGroupAns(prev: MatcherOutput, out: MatcherOutput) {
         }
     })
     //match
-    ans.match = [...ans.match, ...out.match]
+    // ans.match = [...ans.match, ...out.match]
+    ans.match = joinTokens(out.raw, ans.match, out.match)
     return ans
 }

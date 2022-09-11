@@ -1,9 +1,9 @@
 import { toMatcher } from "../toMatcher"
-import { Matcher, MatcherLike } from "../type"
+import { MatcherLike, SomeMatcher } from "../type"
 import { group } from "./group"
 import { repeat } from "./repeat"
 
-export const list = (args: MatcherLike[] | MatcherLike, joiner: MatcherLike = ","): Matcher<string> => {
+export const list = (args: MatcherLike[] | MatcherLike, joiner: MatcherLike = ","): SomeMatcher => {
     if (!(args instanceof Array)) args = [args]
     const matchers = toMatcher(...args)
     const joinMatcher = toMatcher(joiner)

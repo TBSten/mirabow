@@ -1,7 +1,7 @@
 import { getConfig } from "../config";
 import { isAscii } from "../helper/string";
 import { Matcher } from "../type";
-import { notImplement } from "../util";
+import { notImplement, tokens } from "../util";
 
 export const identifier = (): Matcher<"identifier"> => {
     return {
@@ -30,19 +30,19 @@ export const identifier = (): Matcher<"identifier"> => {
                 // console.error("identifier failed lex",);
                 return {
                     ok: false,
-                    tokens: [],
+                    tokens: tokens(input.raw, []),
                     end,
                 }
             }
             return {
                 ok: true,
-                tokens: [
+                tokens: tokens(input.raw, [
                     {
                         text: buf,
                         start: input.start,
                         end,
                     }
-                ],
+                ]),
                 end,
             }
         },
@@ -52,16 +52,16 @@ export const identifier = (): Matcher<"identifier"> => {
                 return {
                     ok: true,
                     capture: {},
-                    match: [nextToken],
-                    result: null,
+                    match: tokens(input.getRaw(), [nextToken]),
+                    raw: input.getRaw(),
                 }
             }
             // console.error("identifier failed exec", "expect identifier", "recv", nextToken);
             return {
                 ok: false,
                 capture: {},
-                match: [],
-                result: null,
+                match: tokens(input.getRaw(), []),
+                raw: input.getRaw(),
             }
         },
     }
