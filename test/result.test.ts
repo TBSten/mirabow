@@ -89,6 +89,8 @@ test("program lang", () => {
     const variables: Record<string, number> = {
         x: 123,
     }
+    const queue: unknown[] = []
+    const output = (value: unknown) => queue.push(value)
     val.hooks.push(out => {
         const name = out.capture["val-name"]?.tokens?.[0].text()
         const num = out.capture["val-num"]?.tokens?.[0].text()
@@ -97,14 +99,19 @@ test("program lang", () => {
     })
     print.hooks.push(out => {
         const target = out.capture["print-target"]?.tokens?.[0].text()
-        i("print", target && variables[target])
+        target && output(variables[target])
     })
 
     const s = performance.now()
-    const out = execute(program, `x <= 100 ; x <= 200 ; print x`)
+    const out = execute(program, `x <= 100 ; print x ; x <= 200 ; print x`)
     const e = performance.now()
-    i("time", e - s, variables, out)
 
-    expect(out.ok).toBe(true)
-
+    expect(out.ok)
+        .toBe(true)
+    expect(variables)
+        .toEqual({
+            x: 200,
+        })
+    expect(queue)
+        .toEqual([100, 200])
 })
