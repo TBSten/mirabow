@@ -10,11 +10,13 @@ export const or = (
         type: "or",
         debug: `(${matchers.map(m => m.debug).join("|")})`,
         lex(input) {
+            const start = input.start
             for (const matcher of matchers) {
                 const out = matcher.lex(input)
                 if (out.ok) {
                     return out
                 }
+                input.start = start
             }
             return {
                 ok: false,

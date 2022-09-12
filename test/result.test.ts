@@ -1,5 +1,6 @@
 
 import { arrayScope, cap, capture, def, execute, identifier, li, MatcherOutput, numberLiteral, opt, or, repeat } from "../src";
+import { i } from "./util";
 
 type Detail<T extends string> = {}
 type SelectDetail = Detail<"select"> & {
@@ -81,10 +82,28 @@ test("list result", () => {
 test("program lang", () => {
     const val = def(cap("val-name", identifier()), or("<-", "<="), cap("val-num", numberLiteral))
     const print = def("print", cap("print-target", identifier()))
-    const line = def(or(val, print))
-    const program = def(repeat(line, repeat(";")))
+    // const line = def(or(print, val), repeat(";"))
+    const line = def(or(val, print), repeat(";"))
+    const program = def(repeat(line))
 
-    const out = execute(program, `x <= 10 ; y <= 20 ; x <= 100 ; print x`)
+    const variables: Record<string, number> = {
+        x: 123,
+    }
+    val.hooks.push(out => {
+        const name = out.capture["val-name"]?.tokens?.[0].text()
+        const num = out.capture["val-num"]?.tokens?.[0].text()
+        i("val", name, num);
+        if (name && num && parseFloat(num)) variables[name] = parseFloat(num)
+    })
+    print.hooks.push(out => {
+        const target = out.capture["print-target"]?.tokens?.[0].text()
+        i("print", target && variables[target])
+    })
+
+    const s = performance.now()
+    const out = execute(program, `x <= 100 ; x <= 200 ; print x`)
+    const e = performance.now()
+    i("time", e - s, variables, out)
 
     expect(out.ok).toBe(true)
 
