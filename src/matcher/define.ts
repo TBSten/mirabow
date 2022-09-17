@@ -4,18 +4,21 @@ import { DefinedMatcher, MatcherLike, SomeMatcher } from "../type";
 export const define = (
     ..._matcher: [() => MatcherLike] | MatcherLike[]
 ): DefinedMatcher => {
-    const childMatcher: SomeMatcher | null = null
+    let childMatcher: SomeMatcher | null = null
     const getChildMatcher = () => {
         if (childMatcher) return childMatcher
-        return toMatcher(
+        childMatcher = toMatcher(
             _matcher[0] instanceof Function ?
                 _matcher[0]() :
                 (_matcher as MatcherLike)
         )
+        return childMatcher
     }
     const definedMatcher: DefinedMatcher = {
         type: "define",
-        debug: `<defined>`,
+        get debug() {
+            return childMatcher !== null ? `(${childMatcher.debug})` : `<defined>`
+        },
         hooks: [],
         lex(input) {
             return getChildMatcher().lex(input)
