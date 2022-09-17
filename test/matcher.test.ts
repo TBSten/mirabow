@@ -224,3 +224,11 @@ test("duplicate CaptureNode name", () => {
         .toBe(true)
 })
 
+test("repeatable capture", () => {
+    const m = def(repeat(capture("num", /[0-9]/)))
+    const out = execute(m, `98765`)
+    expect(out.capture["num"]?.tokens?.map(num => num.text()))
+        .toEqual([
+            "9", "8", "7", "6", "5",
+        ])
+})
