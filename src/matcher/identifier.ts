@@ -1,4 +1,5 @@
 import { getConfig } from "../config";
+import { MirabowError } from "../error/MirabowError";
 import { isAscii } from "../helper/string";
 import { Matcher } from "../type";
 import { notImplement, tokens } from "../util";
@@ -32,7 +33,13 @@ export const identifier = (): Matcher<"identifier"> => {
                     ok: false,
                     tokens: tokens(input.raw, []),
                     end,
-                    errors: [Error(`identifier failed lex : none identifier charactors at ${input.start}`)],
+                    // errors: [Error(`identifier failed lex : none identifier charactors at ${input.start}`)],
+                    errors: [
+                        new MirabowError({
+                            when: "lex",
+                            reason: `none identifier charactors at ${input.start}`
+                        }),
+                    ]
                 }
             }
             return {
@@ -65,7 +72,10 @@ export const identifier = (): Matcher<"identifier"> => {
                 capture: {},
                 match: tokens(input.getRaw(), []),
                 raw: input.getRaw(),
-                errors: [`identifier failed exec : expect identifier but ${nextToken}`],
+                errors: [new MirabowError({
+                    when: "exec",
+                    reason: `expect identifier but ${nextToken}`,
+                })],
             }
         },
     }

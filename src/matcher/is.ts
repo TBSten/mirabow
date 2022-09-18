@@ -1,4 +1,5 @@
 import { getConfig } from '../config';
+import { MirabowError } from '../error/MirabowError';
 import { perfectMatch, startWith } from "../helper/regex";
 import { esc, len } from '../helper/string';
 import { Matcher, Token } from "../type";
@@ -50,7 +51,13 @@ export const is = (
                 ok: false,
                 tokens: tokens(input.raw, []),
                 end: input.start,
-                errors: [Error(`is failed lex : expect ${regex.source} but ${text}`)],
+                // errors: [Error(`is failed lex : expect ${regex.source} but ${text}`)],
+                errors: [
+                    new MirabowError({
+                        when: "lex",
+                        reason: `expect ${regex.source} but ${text}`,
+                    }),
+                ]
             }
         },
         exec(input) {
@@ -70,7 +77,13 @@ export const is = (
                 capture: {},
                 match: tokens(input.getRaw(), []),
                 raw: input.getRaw(),
-                errors: [Error(`is failed exec : expect ${regex.source} but ${nextToken?.text}`)],
+                // errors: [Error(`is failed exec : expect ${regex.source} but ${nextToken?.text}`)],
+                errors: [
+                    new MirabowError({
+                        when: "exec",
+                        reason: `expect ${regex.source} but ${nextToken?.text}`
+                    })
+                ],
             }
         },
     }

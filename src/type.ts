@@ -1,3 +1,4 @@
+import { MirabowError } from "./error/MirabowError"
 
 export type Token = {
     text: string,
@@ -10,8 +11,6 @@ export type Tokens = {
     end: number
     base: Token[]
 }
-
-export type MirabowError = unknown
 
 export type LexerInput = {
     text: string,

@@ -1,3 +1,4 @@
+import { MirabowError } from "./error/MirabowError";
 import { notImplementTokenizeError } from "./error/tokenize";
 import { MatcherInput, MatcherOutput, SomeMatcher } from "./type";
 import { tokens } from "./util";
@@ -55,7 +56,10 @@ export class MatcherExecutor {
                 ok: false,
                 capture: {},
                 match: tokens(text, []),
-                errors: [e],
+                errors: [new MirabowError({
+                    reason: e,
+                    when: "exec",  //lexかもしれない
+                })],
             }
         }
 

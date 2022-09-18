@@ -1,5 +1,6 @@
+import { MirabowError } from "../error/MirabowError";
 import { toMatcher } from "../toMatcher";
-import { Matcher, MatcherLike, MirabowError } from "../type";
+import { Matcher, MatcherLike } from "../type";
 import { tokens } from "../util";
 
 export const or = (
@@ -18,9 +19,12 @@ export const or = (
                     return out
                 }
                 input.start = start
-                errors.push(out.errors)
+                errors.push(...out.errors)
             }
-            const error = Error(`or failed lex : none of (${matchers.map(m => m.debug).join(" ")})`)
+            const error = new MirabowError({
+                reason: ``,
+                when: "lex",
+            })
             return {
                 ok: false,
                 tokens: tokens(input.raw, []),
@@ -35,7 +39,7 @@ export const or = (
                 const out = m.exec(input)
                 if (!out.ok) {
                     input.setIndex(orStartIndex)
-                    errors.push(out.errors)
+                    errors.push(...out.errors)
                     continue
                 }
                 return {
@@ -46,13 +50,16 @@ export const or = (
                     errors: [],
                 }
             }
-            const error = Error(`or failed exec : none of (${matchers.map(m => m.debug).join(" ")})`)
             return {
                 ok: false,
                 match: tokens(input.getRaw(), []),
                 capture: {},
                 raw: input.getRaw(),
-                errors: [Object.assign(error, { childrenErrors: errors })],
+                errors: [new MirabowError({
+                    when: "exec",
+                    reason: `expect ${matchers.map(m => m.debug).join(" | ")} but invalid tokens`,
+                    childrenErrors: errors,
+                })],
             }
         }
     }
