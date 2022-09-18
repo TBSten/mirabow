@@ -1,4 +1,5 @@
 import { arrayScope, cap, capture, CaptureScope, def, execute, identifier, list, MatcherExecutor, optional, or, repeat, scope, setConfig, toMatcher } from "../src"
+import { blank } from "../src/matcher/blank"
 import { testTokens } from "./util"
 
 beforeEach(() => {
@@ -232,3 +233,11 @@ test("repeatable capture", () => {
             "9", "8", "7", "6", "5",
         ])
 })
+
+test("blank", () => {
+    const m1 = def(blank(), "select", blank(), "from", blank(),)
+    const out1 = execute(m1, `select from`)
+    expect(out1.ok)
+        .toBe(true)
+})
+
