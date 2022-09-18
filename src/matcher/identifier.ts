@@ -32,6 +32,7 @@ export const identifier = (): Matcher<"identifier"> => {
                     ok: false,
                     tokens: tokens(input.raw, []),
                     end,
+                    errors: [Error(`identifier failed lex : none identifier charactors at ${input.start}`)],
                 }
             }
             return {
@@ -44,6 +45,7 @@ export const identifier = (): Matcher<"identifier"> => {
                     }
                 ]),
                 end,
+                errors: [],
             }
         },
         exec(input) {
@@ -54,6 +56,7 @@ export const identifier = (): Matcher<"identifier"> => {
                     capture: {},
                     match: tokens(input.getRaw(), [nextToken]),
                     raw: input.getRaw(),
+                    errors: [],
                 }
             }
             // console.error("identifier failed exec", "expect identifier", "recv", nextToken);
@@ -62,6 +65,7 @@ export const identifier = (): Matcher<"identifier"> => {
                 capture: {},
                 match: tokens(input.getRaw(), []),
                 raw: input.getRaw(),
+                errors: [`identifier failed exec : expect identifier but ${nextToken}`],
             }
         },
     }

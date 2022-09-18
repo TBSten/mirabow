@@ -19,6 +19,7 @@ export const optional = (...args: MatcherLike[]): Matcher<"optional"> => {
                     ok: true,
                     tokens: tokens(input.raw, []),
                     end: input.start,
+                    errors: [],
                 }
             }
         },
@@ -32,6 +33,7 @@ export const optional = (...args: MatcherLike[]): Matcher<"optional"> => {
                     capture: {},
                     match: tokens(input.getRaw(), []),
                     raw: input.getRaw(),
+                    errors: [],
                 }
             }
             return matcherOut

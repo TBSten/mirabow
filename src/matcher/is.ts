@@ -38,6 +38,7 @@ export const is = (
                     tokens: tokens(input.raw, [
                         token
                     ]),
+                    errors: [],
                 }
             }
             // console.error(
@@ -49,6 +50,7 @@ export const is = (
                 ok: false,
                 tokens: tokens(input.raw, []),
                 end: input.start,
+                errors: [Error(`is failed lex : expect ${regex.source} but ${text}`)],
             }
         },
         exec(input) {
@@ -60,6 +62,7 @@ export const is = (
                     capture: {},
                     match: tokens(input.getRaw(), [nextToken]),
                     raw: input.getRaw(),
+                    errors: [],
                 }
             }
             return {
@@ -67,6 +70,7 @@ export const is = (
                 capture: {},
                 match: tokens(input.getRaw(), []),
                 raw: input.getRaw(),
+                errors: [Error(`is failed exec : expect ${regex.source} but ${nextToken?.text}`)],
             }
         },
     }

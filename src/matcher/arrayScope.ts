@@ -10,6 +10,9 @@ export const arrayScope = (name: string) => (...args: MatcherLike[]): Matcher<"s
         exec(input) {
             const out = matcher.exec(input)
             const ans = { ...out }
+            if (!ans.ok) {
+                return ans
+            }
             ans.capture = {
                 [name]: {
                     ...(ans.capture[name] ?? {}),

@@ -41,3 +41,4 @@ export const joinTokens = (rawText: string, _tokens1: Token[] | Tokens, _tokens2
 export const notImplement = (msg = "something invalid"): never => {
     throw new Error(msg)
 }
+

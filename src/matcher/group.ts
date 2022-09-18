@@ -11,10 +11,11 @@ export const group = (
         type: "group",
         debug: `${matchers.map(m => m.debug).join(" ")}`,
         lex(input) {
-            const grpOut: LexerOutput = {
+            let grpOut: LexerOutput = {
                 ok: true,
                 tokens: tokens(input.raw, []),
                 end: input.start,
+                errors: [],
             }
             function skipIgnoreS() {
                 const skip = skipIgnoreString(input)
@@ -34,6 +35,7 @@ export const group = (
                     input.start = mOut.end
                 } else {
                     grpOut.ok = false
+                    grpOut.errors.push(...mOut.errors)
                     // ここでbreakしなければ曖昧な一致ができる?!
                     break
                 }
@@ -47,11 +49,13 @@ export const group = (
                 ok: true,
                 capture: {},
                 match: tokens(input.getRaw(), []),
+                errors: [],
             }
             for (const m of matchers) {
                 const out = m.exec(input)
                 if (!out.ok) {
                     ans.ok = false
+                    ans.errors.push(...out.errors)
                     break
                 }
                 ans = _updateGroupAns(ans, out)

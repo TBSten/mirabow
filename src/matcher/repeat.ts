@@ -16,6 +16,7 @@ export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
                 ok: true,
                 tokens: tokens(input.raw, []),
                 end: 0,
+                errors: [],
             }
             function skipIgnoreS() {
                 const skip = skipIgnoreString(input)
@@ -45,6 +46,7 @@ export const repeat = (..._matchers: MatcherLike[]): Matcher<"repeat"> => {
                 capture: {},
                 match: tokens(input.getRaw(), []),
                 raw: input.getRaw(),
+                errors: [],
             }
             while (input.hasNext()) {
                 const out = matcher.exec(input)

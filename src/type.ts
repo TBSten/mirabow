@@ -11,6 +11,8 @@ export type Tokens = {
     base: Token[]
 }
 
+export type MirabowError = unknown
+
 export type LexerInput = {
     text: string,
     start: number,
@@ -20,6 +22,7 @@ export type LexerOutput = {
     ok: boolean
     tokens: Tokens,
     end: number,
+    errors: MirabowError[],
 }
 export type Lexer = (input: LexerInput) => LexerOutput
 
@@ -36,6 +39,7 @@ export type MatcherOutput = {
     ok: boolean
     match: Tokens
     capture: CaptureScope
+    errors: MirabowError[]
 }
 export type BasicMatcher<T extends string> = {
     type: T
