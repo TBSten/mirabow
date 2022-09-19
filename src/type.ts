@@ -51,7 +51,7 @@ export type DefinedMatcher = BasicMatcher<"define"> & {
 }
 export type Matcher<T extends string> = BasicMatcher<T> | DefinedMatcher
 export type MatcherLikeUnit = string | RegExp | SomeMatcher
-export type MatcherLike = MatcherLikeUnit | MatcherLikeUnit[]
+export type MatcherLike = MatcherLikeUnit | MatcherLike[]
 export type SomeMatcher = Matcher<string>
 
 export type CaptureScope = {
