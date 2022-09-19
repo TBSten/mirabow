@@ -13,8 +13,8 @@ export const stringLiteral = or(enclosedToken(`"`), enclosedToken(`'`),)
 export const integerLiteral = is(/(0|[1-9][0-9]*)/)
 export const numberLiteral = is(/(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?/)
 
-export const withHook = (like: MatcherLike, hook: Hook | Hook[]) => {
+export const withHook = (like: MatcherLike, ...hooks: Hook[]) => {
     const matcher = def(() => like)
-    matcher.hooks.push(...(hook instanceof Array ? hook : [hook]))
+    matcher.hooks.push(...hooks)
     return matcher
 }
